@@ -52,7 +52,7 @@ func parseExtractedEvent(from rawResponse: String) throws -> ExtractedEvent {
     return try JSONDecoder().decode(ExtractedEvent.self, from: innerData)
 }
 
-let apiKey = "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"
+let apiKey = ProcessInfo.processInfo.environment["GROQ_API_KEY"] ?? ""
 
 let prompt = """
 Extract event details as JSON with keys: eventName, date, location, attendeeCount.
