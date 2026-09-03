@@ -69,7 +69,7 @@ def call_llm_native(user_request: str) -> dict:
         raise RuntimeError("Model did not return a tool call")
 
     return tool_calls[0]
-
+ 
 
 def get_weather(city: str) -> str:
     return f"It's sunny and 28°C in {city}."
