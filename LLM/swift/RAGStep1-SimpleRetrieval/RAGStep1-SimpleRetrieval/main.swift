@@ -20,8 +20,8 @@ struct Message: Codable {
 }
 
 let documents = [
-    "Our refund policy allows returns within 30 days.",
     "Our office is located in Bangalore.",
+    "Our refund policy allows returns within 30 days.",
     "Shipping takes 3-5 business days."
 ]
 
@@ -68,7 +68,22 @@ func callGroq(prompt: String) async throws -> String {
     return response.choices[0].message.content
 }
 
-let question = "How long for a refund"
+func getEmbedding(text: String) async throws -> [Double] {
+    let apiKey = ProcessInfo.processInfo.environment["HF_API_KEY"] ?? ""
+    let url = URL(string: "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction")!
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = try JSONSerialization.data(withJSONObject: ["inputs": text])
+
+    let (data, _) = try await URLSession.shared.data(for: request)
+    let embedding = try JSONDecoder().decode([Double].self, from: data)
+    return embedding
+}
+
+let question = "What's your money-back policy?"/*"How long for a refund"*/
 let bestMatch = findBestMatch(question: question, documents: documents)
 
 print("Question: \(question)")
