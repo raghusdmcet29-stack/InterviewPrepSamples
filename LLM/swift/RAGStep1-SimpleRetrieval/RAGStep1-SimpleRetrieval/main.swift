@@ -113,7 +113,7 @@ func findBestMatchByEmbedding(question: String, documents: [String]) async throw
     for document in documents {
         let documentEmbedding = try await getEmbedding(text: document)
         let score = cosineSimilarity(a: questionEmbedding, b: documentEmbedding)
-
+        print("Score for '\(document)': \(score)")
         if score > bestScore {
             bestScore = score
             bestDocument = document
@@ -123,7 +123,7 @@ func findBestMatchByEmbedding(question: String, documents: [String]) async throw
     return bestDocument
 }
 
-let question = "Can I send back a product I don't want?" /*"How long for a refund?"*/
+let question = /*"Can I send back a product I don't want?"*/ "How long for a refund"
 
 Task {
     do {

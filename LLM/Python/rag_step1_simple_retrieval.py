@@ -1,46 +1,64 @@
 import os
+import math
 import requests
 
-documents = [
-    "Our refund policy allows returns within 30 days.",
-    "Our office is located in Bangalore.",
-    "Shipping takes 3-5 business days."
-]
+# --- Step 1: Get embedding for a piece of text ---
+def get_embedding(text):
+    api_key = os.environ["HF_API_KEY"]
+    url = "https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction"
 
-def overlap_score(question, document):
-    question_words = set(question.lower().split())
-    document_words = set(document.lower().split())
-    return len(question_words.intersection(document_words))
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    body = {"inputs": text}
+
+    response = requests.post(url, headers=headers, json=body)
+    embedding = response.json()
+    return embedding
 
 
-def find_best_match(question, documents):
+# --- Step 2: Compare two embeddings ---
+def cosine_similarity(a, b):
+    dot_product = 0.0
+    magnitude_a = 0.0
+    magnitude_b = 0.0
+
+    for i in range(len(a)):
+        dot_product += a[i] * b[i]
+        magnitude_a += a[i] * a[i]
+        magnitude_b += b[i] * b[i]
+
+    magnitude_a = math.sqrt(magnitude_a)
+    magnitude_b = math.sqrt(magnitude_b)
+
+    return dot_product / (magnitude_a * magnitude_b)
+
+
+# --- Step 3: Find the best matching document using embeddings ---
+def find_best_match_by_embedding(question, documents):
+    question_embedding = get_embedding(question)
+
     best_document = documents[0]
-    best_score = 0
+    best_score = -1.0
 
     for document in documents:
-        score = overlap_score(question, document)
+        document_embedding = get_embedding(document)
+        score = cosine_similarity(question_embedding, document_embedding)
+        print(f"Score for '{document}': {score}")
+
         if score > best_score:
             best_score = score
             best_document = document
 
     return best_document
 
-question = "How long for a refund"
-best_match = find_best_match(question, documents)
 
-print(f"Question: {question}")
-print(f"Best matching document: {best_match}") 
-
-prompt = f"""Context: {best_match}
-
-Question: {question}
-
-Answer using only the context above."""
-
+# --- Step 4: Call Groq with the retrieved context ---
 def call_groq(prompt):
     api_key = os.environ["GROQ_API_KEY"]
-
     url = "https://api.groq.com/openai/v1/chat/completions"
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
@@ -55,5 +73,26 @@ def call_groq(prompt):
     data = response.json()
     return data["choices"][0]["message"]["content"]
 
+
+# --- Main pipeline ---
+documents = [
+    "Our office is located in Bangalore.",
+    "Our refund policy allows returns within 30 days.",
+    "Shipping takes 3-5 business days."
+]
+
+question = "How long for a refund"
+
+best_match = find_best_match_by_embedding(question, documents)
+
+print("Question:", question)
+print("Best matching document:", best_match)
+
+prompt = f"""Context: {best_match}
+
+Question: {question}
+
+Answer using only the context above."""
+
 answer = call_groq(prompt)
-print(f"LLM Answer: {answer}")
+print("LLM Answer:", answer)
