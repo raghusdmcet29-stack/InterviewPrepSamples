@@ -53,12 +53,12 @@
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "GROQ_API_KEY"
-            value = "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"
+            value = "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"
             isEnabled = "YES">
          </EnvironmentVariable>
          <EnvironmentVariable
             key = "HF_API_KEY"
-            value = "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"
+            value = "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"
             isEnabled = "YES">
          </EnvironmentVariable>
       </EnvironmentVariables>

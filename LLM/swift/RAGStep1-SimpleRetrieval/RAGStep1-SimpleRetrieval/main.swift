@@ -78,36 +78,100 @@ func getEmbedding(text: String) async throws -> [Double] {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = try JSONSerialization.data(withJSONObject: ["inputs": text])
 
-    let (data, _) = try await URLSession.shared.data(for: request)
+    let (data, response) = try await URLSession.shared.data(for: request)
+
+    if let httpResponse = response as? HTTPURLResponse {
+        print("Status code: \(httpResponse.statusCode)")
+    }
     let embedding = try JSONDecoder().decode([Double].self, from: data)
     return embedding
 }
 
-let question = "What's your money-back policy?"/*"How long for a refund"*/
-let bestMatch = findBestMatch(question: question, documents: documents)
+func cosineSimilarity(a: [Double], b: [Double]) -> Double {
+    var dotProduct = 0.0
+    var magnitudeA = 0.0
+    var magnitudeB = 0.0
 
-print("Question: \(question)")
-print("Best matching document: \(bestMatch)")
+    for i in 0..<a.count {
+        dotProduct += a[i] * b[i]
+        magnitudeA += a[i] * a[i]
+        magnitudeB += b[i] * b[i]
+    }
 
-let prompt = """
-Context: \(bestMatch)
+    magnitudeA = sqrt(magnitudeA)
+    magnitudeB = sqrt(magnitudeB)
 
-Question: \(question)
+    return dotProduct / (magnitudeA * magnitudeB)
+}
 
-Answer using only the context above.
-"""
+func findBestMatchByEmbedding(question: String, documents: [String]) async throws -> String {
+    let questionEmbedding = try await getEmbedding(text: question)
 
+    var bestDocument = documents[0]
+    var bestScore = -1.0
+
+    for document in documents {
+        let documentEmbedding = try await getEmbedding(text: document)
+        let score = cosineSimilarity(a: questionEmbedding, b: documentEmbedding)
+
+        if score > bestScore {
+            bestScore = score
+            bestDocument = document
+        }
+    }
+
+    return bestDocument
+}
+
+let question = "Can I send back a product I don't want?" /*"How long for a refund?"*/
 
 Task {
     do {
+        let bestMatch = try await findBestMatchByEmbedding(question: question, documents: documents)
+
+        print("Question: \(question)")
+        print("Best matching document: \(bestMatch)")
+
+        let prompt = """
+        Context: \(bestMatch)
+
+        Question: \(question)
+
+        Answer using only the context above.
+        """
+
         let answer = try await callGroq(prompt: prompt)
         print("LLM Answer: \(answer)")
-    
     } catch {
         print("Error: \(error)")
-       
     }
     exit(0)
 }
 
 RunLoop.main.run()
+
+/*
+let question = "How long for a refund"
+let bestMatch = findBestMatch(question: question, documents: documents)
+
+print("Question: \(question)")
+print("Best matching document: \(bestMatch)")
+
+// Temporarily testing getEmbedding in isolation — pipeline below not used yet
+Task {
+    do {
+        let vec = try await getEmbedding(text: "How long does a refund take?")
+        print("Vector length: \(vec.count)")
+        print("First 5 values: \(vec.prefix(5))")
+    } catch {
+        print("Error: \(error)")
+    }
+    exit(0)
+}
+*/
+/*let d: [Double] = [2, 0]
+let e: [Double] = [3, 0]
+
+let similarity = cosineSimilarity(a: d, b: e)
+print("Similarity between D and E: \(similarity)")
+*/
