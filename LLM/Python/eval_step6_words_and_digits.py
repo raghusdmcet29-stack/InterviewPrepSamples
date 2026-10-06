@@ -17,7 +17,21 @@ test_cases = [
     {"question": "How many sides does a triangle have?", "accepted": ["3", "three"]},
 ]
 
-
+# PURPOSE: Clean a piece of text so that two strings which LOOK the same
+# also COMPARE as the same.
+#
+# WHY: The model sometimes writes "Fifty-six" with a special hyphen that
+# looks normal but is a different character, so a plain match fails.
+#
+# STEPS:
+#   1. Make everything lowercase.
+#   2. Turn every kind of dash into a normal "-".
+#   3. Turn "-" into a space, so "fifty-six" becomes "fifty six".
+#   4. Squeeze extra spaces into one space.
+#   5. Remove spaces from the start and end.
+#
+# USE: Run it on BOTH the model's answer and the accepted answer
+# before comparing them.
 def normalize(text):
     result = unicodedata.normalize("NFKC", text).lower()
     for dash in ["\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2212"]:

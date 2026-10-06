@@ -25,6 +25,22 @@ let testCases: [TestCase] = [
     TestCase(question: "How many sides does a triangle have?", accepted: ["3", "three"])
 ]
 
+// PURPOSE: Clean a piece of text so that two strings which LOOK the same
+// also COMPARE as the same.
+//
+// WHY: The model sometimes writes "Fifty-six" with a special hyphen that
+// looks normal but is a different character, so a plain match fails.
+//
+// STEPS:
+//   1. Make everything lowercase.
+//   2. Turn every kind of dash into a normal "-".
+//   3. Turn "-" into a space, so "fifty-six" becomes "fifty six".
+//   4. Squeeze extra spaces into one space.
+//   5. Remove spaces from the start and end.
+//
+// USE: Run it on BOTH the model's answer and the accepted answer
+// before comparing them.
+
 func normalize(_ text: String) -> String {
     var result = text.precomposedStringWithCompatibilityMapping.lowercased()
     let dashes = ["\u{2010}", "\u{2011}", "\u{2012}", "\u{2013}", "\u{2014}", "\u{2212}"]
