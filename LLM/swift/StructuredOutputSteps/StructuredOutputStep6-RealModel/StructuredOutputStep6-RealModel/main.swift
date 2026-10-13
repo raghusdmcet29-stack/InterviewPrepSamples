@@ -95,7 +95,6 @@ func getValidPerson(question: String, maxTries: Int) async -> Person? {
     }
     return nil
 }
-/*
 Task {
     if apiKey.isEmpty {
         print("GROQ_API_KEY is not set")
@@ -106,16 +105,6 @@ Task {
     }
     exit(0)
 }
-*/
-Task {
-    if apiKey.isEmpty {
-        print("GROQ_API_KEY is not set")
-    } else if let person = await getValidPerson(question: "Reply with a haiku about rain.", maxTries: 1) {
-        print("Final: \(person.name), \(person.age)")
-    } else {
-        print("No valid reply after 3 attempts")
-    }
-    exit(0)
-}
 RunLoop.main.run()
+
 
