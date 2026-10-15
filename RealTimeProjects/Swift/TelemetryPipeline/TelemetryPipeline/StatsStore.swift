@@ -10,7 +10,8 @@ import Foundation
 final class StatsStore {
     private var stats: [String: DeviceStats] = [:]
     private let lockQueue = DispatchQueue(label: "stats", attributes: .concurrent)
-
+   
+    
     func record(_ reading: Reading) {
         lockQueue.sync(flags: .barrier) {
             var s = stats[reading.deviceID] ?? DeviceStats()
