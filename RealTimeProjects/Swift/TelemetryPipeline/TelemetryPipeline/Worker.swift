@@ -22,6 +22,7 @@ final class Worker{
         while let reading = queue.dequeue() {
             print("worker \(id) processed \(reading.deviceID): \(reading.value)")
             stats.record(reading)
+            usleep(50_000)
         }
         print("worker \(id) stopped")
     }
