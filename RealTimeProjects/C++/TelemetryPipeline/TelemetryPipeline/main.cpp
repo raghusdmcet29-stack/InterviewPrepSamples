@@ -6,34 +6,26 @@
 //
 
 #include <iostream>
-#include <shared_mutex>
 #include <thread>
+#include <vector>
 #include "Reading.hpp"
 #include "BoundedQueue.hpp"
-
-
-std::mutex print_m;
+#include "Worker.hpp"
 
 int main() {
-    BoundedQueue<Reading> queue(2);
+    BoundedQueue<Reading> queue(4);
 
-    std::thread producer([&queue] {
-        for (int i = 1; i <= 3; i++) {
-            queue.enqueue(Reading{"sensor-A", i * 10.0});
-        }
-    });
+    std::vector<std::thread> workers;
+    for (int id = 1; id <= 2; id++) {
+        workers.emplace_back([&queue, id] { Worker(id, queue).run(); });
+    }
 
-    std::thread consumer([&queue] {
-        while (auto r = queue.dequeue()) {
-            std::lock_guard lock(print_m);
-            std::cout << "took " << r->deviceID << ": " << r->value << std::endl;
-        }
-        std::lock_guard lock(print_m);
-        std::cout << "consumer stopped" << std::endl;
-    });
+    for (double v : {21.0, 23.0, 22.0}) {
+        queue.enqueue(Reading{"sensor-1", v});
+        queue.enqueue(Reading{"sensor-2", v + 10});
+    }
 
-    producer.join();
     queue.close();
-    consumer.join();
+    for (auto& t : workers) t.join();
     return 0;
 }
