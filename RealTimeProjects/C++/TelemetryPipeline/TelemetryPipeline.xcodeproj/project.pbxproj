@@ -28,6 +28,8 @@
 		D76BED633080A7EE00A2DC58 /* Reading.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Reading.hpp; sourceTree = "<group>"; };
 		D76BED643080A92700A2DC58 /* BoundedQueue.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = BoundedQueue.hpp; sourceTree = "<group>"; };
 		D76BED653080AD4A00A2DC58 /* Worker.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Worker.hpp; sourceTree = "<group>"; };
+		D76BED663080ADD200A2DC58 /* DeviceStats.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DeviceStats.hpp; sourceTree = "<group>"; };
+		D76BED673080AE9300A2DC58 /* StatsStore.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = StatsStore.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,8 @@
 				D76BED633080A7EE00A2DC58 /* Reading.hpp */,
 				D76BED643080A92700A2DC58 /* BoundedQueue.hpp */,
 				D76BED653080AD4A00A2DC58 /* Worker.hpp */,
+				D76BED663080ADD200A2DC58 /* DeviceStats.hpp */,
+				D76BED673080AE9300A2DC58 /* StatsStore.hpp */,
 			);
 			path = TelemetryPipeline;
 			sourceTree = "<group>";
