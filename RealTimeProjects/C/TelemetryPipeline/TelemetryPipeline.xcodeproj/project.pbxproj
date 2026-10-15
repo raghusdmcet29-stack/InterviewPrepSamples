@@ -28,6 +28,8 @@
 		D76BED7B3080AF7200A2DC58 /* Reading.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Reading.h; sourceTree = "<group>"; };
 		D76BED7C3080AF9600A2DC58 /* BoundedQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BoundedQueue.h; sourceTree = "<group>"; };
 		D76BED7D3080AFED00A2DC58 /* Worker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Worker.h; sourceTree = "<group>"; };
+		D76BED7E3080B04300A2DC58 /* DeviceStats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceStats.h; sourceTree = "<group>"; };
+		D76BED7F3080B06100A2DC58 /* StatsStore.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StatsStore.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +66,8 @@
 				D76BED7B3080AF7200A2DC58 /* Reading.h */,
 				D76BED7C3080AF9600A2DC58 /* BoundedQueue.h */,
 				D76BED7D3080AFED00A2DC58 /* Worker.h */,
+				D76BED7E3080B04300A2DC58 /* DeviceStats.h */,
+				D76BED7F3080B06100A2DC58 /* StatsStore.h */,
 			);
 			path = TelemetryPipeline;
 			sourceTree = "<group>";
