@@ -8,6 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		D77E3E713081EB2300DB1DC8 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E703081EB2300DB1DC8 /* main.swift */; };
+		D77E3E783082058B00DB1DC8 /* TransferRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E773082058B00DB1DC8 /* TransferRequest.swift */; };
+		D77E3E7A3082060200DB1DC8 /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E793082060200DB1DC8 /* Account.swift */; };
+		D77E3E7C3082063400DB1DC8 /* Bank.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E7B3082063400DB1DC8 /* Bank.swift */; };
+		D77E3E7E3082078300DB1DC8 /* BoundedQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E7D3082078300DB1DC8 /* BoundedQueue.swift */; };
+		D77E3E80308207A600DB1DC8 /* Barrier.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E7F308207A600DB1DC8 /* Barrier.swift */; };
+		D77E3E823082084A00DB1DC8 /* TokenBucket.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E813082084A00DB1DC8 /* TokenBucket.swift */; };
+		D77E3E8430821C8500DB1DC8 /* Retry.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E8330821C8500DB1DC8 /* Retry.swift */; };
+		D77E3E8630821E4300DB1DC8 /* AuditID.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E8530821E4300DB1DC8 /* AuditID.swift */; };
+		D77E3E8830821F9800DB1DC8 /* Summary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77E3E8730821F9800DB1DC8 /* Summary.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +34,15 @@
 /* Begin PBXFileReference section */
 		D77E3E6D3081EB2300DB1DC8 /* BankTransfer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BankTransfer; sourceTree = BUILT_PRODUCTS_DIR; };
 		D77E3E703081EB2300DB1DC8 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		D77E3E773082058B00DB1DC8 /* TransferRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferRequest.swift; sourceTree = "<group>"; };
+		D77E3E793082060200DB1DC8 /* Account.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
+		D77E3E7B3082063400DB1DC8 /* Bank.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bank.swift; sourceTree = "<group>"; };
+		D77E3E7D3082078300DB1DC8 /* BoundedQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundedQueue.swift; sourceTree = "<group>"; };
+		D77E3E7F308207A600DB1DC8 /* Barrier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Barrier.swift; sourceTree = "<group>"; };
+		D77E3E813082084A00DB1DC8 /* TokenBucket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenBucket.swift; sourceTree = "<group>"; };
+		D77E3E8330821C8500DB1DC8 /* Retry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Retry.swift; sourceTree = "<group>"; };
+		D77E3E8530821E4300DB1DC8 /* AuditID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuditID.swift; sourceTree = "<group>"; };
+		D77E3E8730821F9800DB1DC8 /* Summary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Summary.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +76,15 @@
 			isa = PBXGroup;
 			children = (
 				D77E3E703081EB2300DB1DC8 /* main.swift */,
+				D77E3E773082058B00DB1DC8 /* TransferRequest.swift */,
+				D77E3E793082060200DB1DC8 /* Account.swift */,
+				D77E3E7B3082063400DB1DC8 /* Bank.swift */,
+				D77E3E7D3082078300DB1DC8 /* BoundedQueue.swift */,
+				D77E3E7F308207A600DB1DC8 /* Barrier.swift */,
+				D77E3E813082084A00DB1DC8 /* TokenBucket.swift */,
+				D77E3E8330821C8500DB1DC8 /* Retry.swift */,
+				D77E3E8530821E4300DB1DC8 /* AuditID.swift */,
+				D77E3E8730821F9800DB1DC8 /* Summary.swift */,
 			);
 			path = BankTransfer;
 			sourceTree = "<group>";
@@ -120,7 +147,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D77E3E783082058B00DB1DC8 /* TransferRequest.swift in Sources */,
+				D77E3E7C3082063400DB1DC8 /* Bank.swift in Sources */,
 				D77E3E713081EB2300DB1DC8 /* main.swift in Sources */,
+				D77E3E7A3082060200DB1DC8 /* Account.swift in Sources */,
+				D77E3E8630821E4300DB1DC8 /* AuditID.swift in Sources */,
+				D77E3E8430821C8500DB1DC8 /* Retry.swift in Sources */,
+				D77E3E8830821F9800DB1DC8 /* Summary.swift in Sources */,
+				D77E3E823082084A00DB1DC8 /* TokenBucket.swift in Sources */,
+				D77E3E7E3082078300DB1DC8 /* BoundedQueue.swift in Sources */,
+				D77E3E80308207A600DB1DC8 /* Barrier.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

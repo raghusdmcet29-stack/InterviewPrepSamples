@@ -4,76 +4,101 @@
 //
 //  Created by Anussha on 16/10/26.
 //
-
-
 import Foundation
 
-// MARK: - Stage 1: threads
-print("== Stage 1: threads ==")
-let s1a = Thread { print("Transfer A starting") }
-let s1b = Thread { print("Transfer B starting") }
-s1a.start()
-s1b.start()
-sleep(1)
+let bank = Bank()
+bank.open(id: 1, balance: 1000)
+bank.open(id: 2, balance: 1000)
 
-// MARK: - Stage 2 and 3: per-account locks with lock ordering
-print("== Stage 2 and 3: locks and lock ordering ==")
-
-class Account {
-    let id: Int
-    var balance: Int
-    let lock = NSLock()
-
-    init(id: Int, balance: Int) {
-        self.id = id
-        self.balance = balance
+// Stage 1: threads
+let t1 = Thread {
+    for _ in 0..<1000 {
+        _ = bank.transfer(TransferRequest(from: 1, to: 2, amount: 1))
+    }
+}
+let t2 = Thread {
+    for _ in 0..<1000 {
+        _ = bank.transfer(TransferRequest(from: 2, to: 1, amount: 1))
     }
 }
 
-func transfer(from: Account, to: Account, amount: Int) {
-    let first = from.id < to.id ? from : to
-    let second = from.id < to.id ? to : from
-
-    first.lock.lock()
-    second.lock.lock()
-    from.balance -= amount
-    to.balance += amount
-    second.lock.unlock()
-    first.lock.unlock()
-}
-
-let a = Account(id: 1, balance: 1000)
-let b = Account(id: 2, balance: 1000)
-
-let s2t1 = Thread {
-    for _ in 0..<1000 { transfer(from: a, to: b, amount: 1) }
-}
-let s2t2 = Thread {
-    for _ in 0..<1000 { transfer(from: b, to: a, amount: 1) }
-}
-s2t1.start()
-s2t2.start()
+t1.start()
+t2.start()
 sleep(2)
 
-print("A: \(a.balance), B: \(b.balance), total: \(a.balance + b.balance)")
+print("== Stage 1-4 results ==")
+print("A: \(bank.balanceOf(1)), B: \(bank.balanceOf(2)), total: \(bank.balanceOf(1) + bank.balanceOf(2))")
+print("Successful transfers: \(bank.successCount.pointee)")
+print("Failed transfers: \(bank.failedCount.pointee)")
 
-// MARK: - Stage 4: atomic counters
-print("== Stage 4: atomic counters ==")
+// Stage 5-6: worker pool that starts together
+print("== Stage 5-7 ==")
 
-let successCount = UnsafeMutablePointer<Int64>.allocate(capacity: 1)
-successCount.initialize(to: 0)
-let failedCount = UnsafeMutablePointer<Int64>.allocate(capacity: 1)
-failedCount.initialize(to: 0)
+let queue = BoundedQueue(capacity: 3)
+let workerCount = 2
+let startLine = Barrier(parties: workerCount)
+let bucket = TokenBucket(capacity: 2, refillPerSecond: 10)
+let group = DispatchGroup()
 
-let s4t1 = Thread {
-    for _ in 0..<1000 { OSAtomicIncrement64(successCount) }
+for w in 1...workerCount {
+    group.enter()
+    Thread {
+        AuditID.set("worker-\(w)")
+        print("Worker \(w) arrived")
+        startLine.wait()
+        print("Worker \(w) released")
+        while let request = queue.dequeue() {
+            bucket.take()
+           _ = withRetry(maxAttempts: 3, baseDelay: 0.1) {
+                bank.transfer(request)
+            }
+            print("[\(AuditID.current())] moved \(request.amount) from \(request.from) to \(request.to)")
+        }
+        print("Worker \(w) stopped")
+        group.leave()
+    }.start()
 }
-let s4t2 = Thread {
-    for _ in 0..<1000 { OSAtomicIncrement64(failedCount) }
-}
-s4t1.start()
-s4t2.start()
-sleep(1)
 
-print("Successful transfers: \(successCount.pointee)")
-print("Failed transfers: \(failedCount.pointee)")
+let startTime = Date()
+
+for _ in 1...10 {
+    queue.enqueue(TransferRequest(from: 1, to: 2, amount: 10))
+}
+for _ in 1...workerCount {
+    queue.enqueue(nil)
+}
+
+group.wait()
+
+let elapsed = Date().timeIntervalSince(startTime)
+
+print("Batch took \(String(format: "%.1f", elapsed)) seconds")
+print("A: \(bank.balanceOf(1)), B: \(bank.balanceOf(2)), total: \(bank.balanceOf(1) + bank.balanceOf(2))")
+print("Successful transfers: \(bank.successCount.pointee)")
+print("Failed transfers: \(bank.failedCount.pointee)")
+
+// Stage 8 test: fails twice, then succeeds
+print("== Stage 8 test ==")
+var tries = 0
+let ok = withRetry(maxAttempts: 3, baseDelay: 0.1) {
+    tries += 1
+    print("Attempt \(tries)")
+    return tries == 3
+}
+print("Succeeded: \(ok) after \(tries) attempts")
+
+// Stage 10: task group summary
+print("== Stage 10 summary ==")
+let summaryDone = DispatchSemaphore(value: 0)
+
+Task {
+    let summary = await summarize(bank: bank, accountIDs: [1, 2])
+    for id in [1, 2] {
+        print("Account \(id): \(summary.balances[id]!)")
+    }
+    print("Total: \(summary.total)")
+    print("Failed transfers: \(bank.failedCount.pointee)")
+    summaryDone.signal()
+}
+
+summaryDone.wait()
