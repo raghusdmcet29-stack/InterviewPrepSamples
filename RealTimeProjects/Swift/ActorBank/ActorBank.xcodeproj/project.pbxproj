@@ -10,6 +10,7 @@
 		D750B8C830873A0800B7B548 /* Command.swift in Sources */ = {isa = PBXBuildFile; fileRef = D750B8C730873A0800B7B548 /* Command.swift */; };
 		D750B8CA30873EE300B7B548 /* Dispatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = D750B8C930873EE300B7B548 /* Dispatch.swift */; };
 		D750B8CC3087447B00B7B548 /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = D750B8CB3087447B00B7B548 /* Server.swift */; };
+		D750B8CE30876B7B00B7B548 /* Journal.swift in Sources */ = {isa = PBXBuildFile; fileRef = D750B8CD30876B7B00B7B548 /* Journal.swift */; };
 		D76FC0963085F9C6008C6A74 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76FC0953085F9C6008C6A74 /* main.swift */; };
 		D76FC09D30860D1D008C6A74 /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76FC09C30860D1D008C6A74 /* Account.swift */; };
 		D76FC09F30860FBD008C6A74 /* Bank.swift in Sources */ = {isa = PBXBuildFile; fileRef = D76FC09E30860FBD008C6A74 /* Bank.swift */; };
@@ -32,6 +33,7 @@
 		D750B8C730873A0800B7B548 /* Command.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Command.swift; sourceTree = "<group>"; };
 		D750B8C930873EE300B7B548 /* Dispatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dispatch.swift; sourceTree = "<group>"; };
 		D750B8CB3087447B00B7B548 /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
+		D750B8CD30876B7B00B7B548 /* Journal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Journal.swift; sourceTree = "<group>"; };
 		D76FC0923085F9C6008C6A74 /* ActorBank */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ActorBank; sourceTree = BUILT_PRODUCTS_DIR; };
 		D76FC0953085F9C6008C6A74 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		D76FC09C30860D1D008C6A74 /* Account.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 				D750B8C730873A0800B7B548 /* Command.swift */,
 				D750B8C930873EE300B7B548 /* Dispatch.swift */,
 				D750B8CB3087447B00B7B548 /* Server.swift */,
+				D750B8CD30876B7B00B7B548 /* Journal.swift */,
 			);
 			path = ActorBank;
 			sourceTree = "<group>";
@@ -141,6 +144,7 @@
 				D750B8CC3087447B00B7B548 /* Server.swift in Sources */,
 				D76FC09F30860FBD008C6A74 /* Bank.swift in Sources */,
 				D76FC0963085F9C6008C6A74 /* main.swift in Sources */,
+				D750B8CE30876B7B00B7B548 /* Journal.swift in Sources */,
 				D76FC0A1308622FC008C6A74 /* JournalEntry.swift in Sources */,
 				D750B8CA30873EE300B7B548 /* Dispatch.swift in Sources */,
 				D750B8C830873A0800B7B548 /* Command.swift in Sources */,

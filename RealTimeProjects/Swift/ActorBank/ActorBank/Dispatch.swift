@@ -14,7 +14,13 @@ func run(_ command : Command,on bank : Bank) async -> String{
             return "unknown account \(account)"
         }
         let ok = await acct.deposit(amount)
-        return ok ? "ok" : "refused"
+        guard ok else {
+            return "refused"
+        }
+        guard await journal.record(accountId: account, amount: amount) else {
+            return "error: journal write failed"
+        }
+        return "ok"
     case .transfer(from: let from, to: let to, amount: let amount):
         let ok = await bank.transfer(from: from, to: to, amount: amount)
                 return ok ? "ok" : "refused"

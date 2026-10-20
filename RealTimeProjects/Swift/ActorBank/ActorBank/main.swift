@@ -4,13 +4,33 @@
 //
 //  Created by Anussha on 19/10/26.
 //
-
 import Foundation
 
+let folder = journalFileURL.deletingLastPathComponent()
+try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+if !FileManager.default.fileExists(atPath: journalFileURL.path) {
+    let entries = [
+        JournalEntry(sequence: 1, accountId: "A", amount: 100),
+        JournalEntry(sequence: 2, accountId: "A", amount: -30),
+        JournalEntry(sequence: 3, accountId: "B", amount: 50)
+    ]
+    let text = entries.map { $0.line }.joined(separator: "\n") + "\n"
+    _ = try? text.write(to: journalFileURL, atomically: true, encoding: .utf8)
+    print("First run: wrote journal")
+}
+
+
+let balances = rebuildBalances(from: journalFileURL)
+print("Rebuilt A: \(balances["A"] ?? 0)")
+print("Rebuilt B: \(balances["B"] ?? 0)")
+print("Journal at: \(journalFileURL.path)")
+
 Task {
-    _ = await bank.openAccount(id: "A", balance: 70)
+    for (id, balance) in balances {
+        _ = await bank.openAccount(id: id, balance: balance)
+    }
     _ = await bank.openAccount(id: "F", balance: 10)
-    _ = await bank.openAccount(id: "B", balance: 50)
     if let frozen = await bank.account(withId: "F") {
         await frozen.freeze()
     }
