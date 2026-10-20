@@ -42,7 +42,6 @@ func startServer(port: UInt16) throws {
 
 func handleLine(_ line: String) async -> String {
     let firstWord = line.split(separator: " ").first.map(String.init) ?? ""
-    
     let command: Command?
     switch firstWord {
     case "deposit":

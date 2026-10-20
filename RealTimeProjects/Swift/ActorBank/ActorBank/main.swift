@@ -14,7 +14,12 @@ Task {
     if let frozen = await bank.account(withId: "F") {
         await frozen.freeze()
     }
+
+    do {
+        try startServer(port: 9000)
+    } catch {
+        print("server failed to start: \(error)")
+    }
 }
 
-try startServer(port: 9000)
 dispatchMain()
