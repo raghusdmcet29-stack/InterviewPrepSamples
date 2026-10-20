@@ -46,6 +46,21 @@ func appendToJournal(_ entry: JournalEntry, to fileURL: URL) -> Bool {
     }
 }
 
+func appendTextToJournal(_ text: String, to fileURL: URL) -> Bool {
+    guard let data = text.data(using: .utf8),
+          let handle = try? FileHandle(forWritingTo: fileURL) else {
+        return false
+    }
+    defer { try? handle.close() }
+    do {
+        try handle.seekToEnd()
+        try handle.write(contentsOf: data)
+        return true
+    } catch {
+        return false
+    }
+}
+
 actor JournalWriter {
     let fileURL: URL
     private var nextSequence: Int
@@ -61,6 +76,17 @@ actor JournalWriter {
             return false
         }
         nextSequence += 1
+        return true
+    }
+    
+    func recordTransfer(from: String, to: String, amount: Int) -> Bool {
+        let out = JournalEntry(sequence: nextSequence, accountId: from, amount: -amount)
+        let into = JournalEntry(sequence: nextSequence + 1, accountId: to, amount: amount)
+        let text = out.line + "\n" + into.line + "\n"
+        guard appendTextToJournal(text, to: fileURL) else {
+            return false
+        }
+        nextSequence += 2
         return true
     }
 }

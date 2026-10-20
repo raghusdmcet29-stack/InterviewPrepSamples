@@ -33,4 +33,13 @@ actor Bank{
         }
         return true
     }
+    
+    func canTransfer(from fromId: String, to toId: String, amount: Int) async -> Bool {
+        guard let from = accounts[fromId], let to = accounts[toId] else {
+            return false
+        }
+        let fromBalance = await from.balance
+        let toFrozen = await to.isFrozen
+        return fromBalance >= amount && !toFrozen
+    }
 }
