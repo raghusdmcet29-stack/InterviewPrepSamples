@@ -20,7 +20,6 @@ if !FileManager.default.fileExists(atPath: journalFileURL.path) {
     print("First run: wrote journal")
 }
 
-
 let balances = rebuildBalances(from: journalFileURL)
 print("Rebuilt A: \(balances["A"] ?? 0)")
 print("Rebuilt B: \(balances["B"] ?? 0)")
@@ -28,12 +27,10 @@ print("Journal at: \(journalFileURL.path)")
 
 Task {
     for (id, balance) in balances {
-        _ = await bank.openAccount(id: id, balance: balance)
+        await bank.openAccount(id: id, balance: balance)
     }
-    _ = await bank.openAccount(id: "F", balance: 10)
-    if let frozen = await bank.account(withId: "F") {
-        await frozen.freeze()
-    }
+    await bank.openAccount(id: "F", balance: 10)
+    await bank.freeze(id: "F")
 
     do {
         try startServer(port: 9000)

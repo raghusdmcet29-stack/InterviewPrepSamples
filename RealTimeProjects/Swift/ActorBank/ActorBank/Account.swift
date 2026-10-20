@@ -7,35 +7,29 @@
 
 import Foundation
 
-actor Account{
-    let id : String
-    private(set) var balance : Int
+final class Account {
+    let id: String
+    private(set) var balance: Int
     private(set) var isFrozen: Bool = false
-    
+
     init(id: String, balance: Int) {
         self.id = id
         self.balance = balance
     }
-    
-    func deposit(_ amount : Int) -> Bool{
-        guard !isFrozen else{
-            return false
-        }
+
+    func deposit(_ amount: Int) -> Bool {
+        guard !isFrozen else { return false }
         balance += amount
         return true
     }
-    
-    func withdraw(_ amount : Int) -> Bool {
-        guard amount <= balance else {
-            return false
-        }
+
+    func withdraw(_ amount: Int) -> Bool {
+        guard amount <= balance else { return false }
         balance -= amount
         return true
     }
-    
-    func freeze(){
+
+    func freeze() {
         isFrozen = true
     }
-    
-    
 }

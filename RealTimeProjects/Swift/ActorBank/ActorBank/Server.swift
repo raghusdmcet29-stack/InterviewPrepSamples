@@ -10,7 +10,7 @@ import Network
 
 let serverQueue = DispatchQueue(label: "bank.server")
 var activeListener: NWListener?
-let bank = Bank()
+let bank = Bank(journalURL: journalFileURL)
 let journal = JournalWriter(fileURL: journalFileURL)
 
 func startServer(port: UInt16) throws {

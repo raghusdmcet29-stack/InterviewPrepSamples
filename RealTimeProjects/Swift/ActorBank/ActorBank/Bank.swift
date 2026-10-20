@@ -7,39 +7,54 @@
 
 import Foundation
 
-actor Bank{
-    private var accounts : [String : Account] = [:]
-    
-    func openAccount(id: String, balance : Int) -> Account{
-        let account = Account(id: id, balance: balance)
-        accounts[id] = account
-        return account
+actor Bank {
+    private var accounts: [String: Account] = [:]
+    private let journalURL: URL
+    private var nextSequence: Int
+
+    init(journalURL: URL) {
+        self.journalURL = journalURL
+        self.nextSequence = nextSequenceNumber(from: journalURL)
     }
-    
-    func account(withId id : String) -> Account? {
-        accounts[id]
+
+    func openAccount(id: String, balance: Int) {
+        accounts[id] = Account(id: id, balance: balance)
     }
-    
-    func transfer(from fromId : String, to toId : String, amount : Int) async -> Bool{
-        guard let from = accounts[fromId], let to = accounts[toId] else {
+
+    func freeze(id: String) {
+        accounts[id]?.freeze()
+    }
+
+    func balance(of id: String) -> Int? {
+        accounts[id]?.balance
+    }
+
+    func deposit(account id: String, amount: Int) -> Bool {
+        guard let acct = accounts[id], !acct.isFrozen else {
             return false
         }
-        guard await from.withdraw(amount) else {
+        let entry = JournalEntry(sequence: nextSequence, accountId: id, amount: amount)
+        guard appendToJournal(entry, to: journalURL) else {
             return false
         }
-        guard await to.deposit(amount) else {
-            _ = await from.deposit(amount)
+        nextSequence += 1
+        return acct.deposit(amount)
+    }
+
+    func transfer(from fromId: String, to toId: String, amount: Int) -> Bool {
+        guard let from = accounts[fromId], let to = accounts[toId],
+              !to.isFrozen, from.balance >= amount else {
             return false
         }
+        let out = JournalEntry(sequence: nextSequence, accountId: fromId, amount: -amount)
+        let into = JournalEntry(sequence: nextSequence + 1, accountId: toId, amount: amount)
+        let text = out.line + "\n" + into.line + "\n"
+        guard appendTextToJournal(text, to: journalURL) else {
+            return false
+        }
+        nextSequence += 2
+        _ = from.withdraw(amount)
+        _ = to.deposit(amount)
         return true
-    }
-    
-    func canTransfer(from fromId: String, to toId: String, amount: Int) async -> Bool {
-        guard let from = accounts[fromId], let to = accounts[toId] else {
-            return false
-        }
-        let fromBalance = await from.balance
-        let toFrozen = await to.isFrozen
-        return fromBalance >= amount && !toFrozen
     }
 }

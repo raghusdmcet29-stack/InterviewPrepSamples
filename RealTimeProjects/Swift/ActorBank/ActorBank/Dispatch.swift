@@ -5,36 +5,23 @@
 //  Created by Anussha on 20/10/26.
 //
 
-import Foundation
-
-func run(_ command : Command,on bank : Bank) async -> String{
+func run(_ command: Command, on bank: Bank) async -> String {
     switch command {
-    case .deposit(let account,let amount):
-        guard let acct = await bank.account(withId: account) else {
+    case .deposit(let account, let amount):
+        guard await bank.balance(of: account) != nil else {
             return "unknown account \(account)"
         }
-        let ok = await acct.deposit(amount)
-        guard ok else {
-            return "refused"
-        }
-        guard await journal.record(accountId: account, amount: amount) else {
-            return "error: journal write failed"
-        }
-        return "ok"
+        let ok = await bank.deposit(account: account, amount: amount)
+        return ok ? "ok" : "refused"
+
     case .transfer(let from, let to, let amount):
-        guard await bank.canTransfer(from: from, to: to, amount: amount) else {
-            return "refused"
-        }
-        guard await journal.recordTransfer(from: from, to: to, amount: amount) else {
-            return "error: journal write failed"
-        }
         let ok = await bank.transfer(from: from, to: to, amount: amount)
         return ok ? "ok" : "refused"
+
     case .balance(let account):
-        guard let acct = await bank.account(withId: account) else {
+        guard let amount = await bank.balance(of: account) else {
             return "unknown account \(account)"
         }
-        let amount = await acct.balance
         return String(amount)
     }
 }
