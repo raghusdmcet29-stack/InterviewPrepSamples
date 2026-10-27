@@ -7,7 +7,20 @@
 import Foundation
 import CoreServices
 
-let folder = "/Volumes/Data/InterviewPrepSamples/RealTimeProjects/Swift/FileMonitor"
+let fileManager = FileManager.default
+let folderURL = fileManager.homeDirectoryForCurrentUser.appendingPathComponent("ESWatchFolder")
+
+// Check if the folder doesn't exist, then create it
+if !fileManager.fileExists(atPath: folderURL.path) {
+    do {
+        try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
+        print("Created directory at: \(folderURL.path)")
+    } catch {
+        print("Error creating directory: \(error)")
+    }
+}
+
+let folder = folderURL.path
 var known: Set<String> = []
 
 func labelsFor(_ flags: FSEventStreamEventFlags) -> [String] {
@@ -37,12 +50,18 @@ func onFileEvents(
         let path = paths[i]
         let flags = eventFlags[i]
 
-        let dropped = flags & UInt32(kFSEventStreamEventFlagMustScanSubDirs) != 0
-            || flags & UInt32(kFSEventStreamEventFlagUserDropped) != 0
-            || flags & UInt32(kFSEventStreamEventFlagKernelDropped) != 0
-        if dropped {
-            print("WARNING: events were dropped under \(path). A rescan is needed.")
-             rescan()
+        let mustScan = flags & UInt32(kFSEventStreamEventFlagMustScanSubDirs) != 0
+        let userDropped = flags & UInt32(kFSEventStreamEventFlagUserDropped) != 0
+        let kernelDropped = flags & UInt32(kFSEventStreamEventFlagKernelDropped) != 0
+
+        if mustScan || userDropped || kernelDropped {
+            var reasons: [String] = []
+            if mustScan { reasons.append("MustScanSubDirs") }
+            if userDropped { reasons.append("UserDropped") }
+            if kernelDropped { reasons.append("KernelDropped") }
+            
+            print("WARNING: Events were dropped under \(path) due to: [\(reasons.joined(separator: ", "))]. A rescan is needed.")
+            rescan()
             continue
         }
 
