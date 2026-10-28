@@ -49,8 +49,8 @@ func onFileEvents(
             let key = "\(label)|\(path)"
             if seen.contains(key) { continue }
             seen.insert(key)
-            if label == "New file" { known.insert(path) }
-            if label == "Removed" { known.remove(path) }
+            if label == "New file" { known.insert(path); dbInsert(path) }
+            if label == "Removed" { known.remove(path); dbRemove(path) }
             print("\(label): \(path)")
         }
     }

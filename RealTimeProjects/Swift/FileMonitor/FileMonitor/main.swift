@@ -36,6 +36,6 @@ guard let stream = FSEventStreamCreate(
 FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
 known = enumerateFiles(in: folder)
 FSEventStreamStart(stream)
-
+openDatabase()
 print("Watching \(folder) in real time. Press Ctrl+C to stop.")
 dispatchMain()

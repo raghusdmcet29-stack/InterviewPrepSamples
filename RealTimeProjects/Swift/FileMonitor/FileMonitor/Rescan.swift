@@ -16,9 +16,11 @@ func rescan() {
     let current = enumerateFiles(in: folder)
     for path in current.subtracting(known).sorted() {
         print("rescan:New file: \(path)")
+        dbInsert(path)
     }
     for path in known.subtracting(current).sorted() {
         print("rescan:Removed: \(path)")
+        dbRemove(path)
     }
     known = current
 }
