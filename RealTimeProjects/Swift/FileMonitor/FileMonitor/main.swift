@@ -22,6 +22,7 @@ if !fileManager.fileExists(atPath: folderURL.path) {
 
 let folder = folderURL.path
 var known: Set<String> = []
+var pendingRescan: DispatchWorkItem?
 
 func labelsFor(_ flags: FSEventStreamEventFlags) -> [String] {
     var labels: [String] = []
@@ -45,6 +46,7 @@ func onFileEvents(
 ) {
     let paths = unsafeBitCast(eventPaths, to: NSArray.self) as! [String]
     var seen = Set<String>()
+    var needsRescan = false
 
     for i in 0..<numEvents {
         let path = paths[i]
@@ -61,7 +63,7 @@ func onFileEvents(
             if kernelDropped { reasons.append("KernelDropped") }
             
             print("WARNING: Events were dropped under \(path) due to: [\(reasons.joined(separator: ", "))]. A rescan is needed.")
-            rescan()
+            needsRescan = true
             continue
         }
 
@@ -75,12 +77,22 @@ func onFileEvents(
             let key = "\(label)|\(path)"
             if seen.contains(key) { continue }
             seen.insert(key)
+            if label == "New file" { known.insert(path) }
+            if label == "Removed" { known.remove(path) }
             print("\(label): \(path)")
         }
+    }
+    if needsRescan {
+        pendingRescan?.cancel()
+        let work = DispatchWorkItem { rescan() }
+        pendingRescan = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
 }
 
 func rescan() {
+    print("rescan called")
+    
     let current = enumerateFiles(in: folder)
     for path in current.subtracting(known).sorted() {
         print("rescan:New file: \(path)")
@@ -122,7 +134,7 @@ guard let stream = FSEventStreamCreate(
 }
 
 FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
+known = enumerateFiles(in: folder)
 FSEventStreamStart(stream)
-
 print("Watching \(folder) in real time. Press Ctrl+C to stop.")
 dispatchMain()
