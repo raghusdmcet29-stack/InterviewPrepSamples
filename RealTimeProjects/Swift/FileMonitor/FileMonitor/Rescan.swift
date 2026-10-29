@@ -23,19 +23,22 @@ func rescan() {
         let removedFiles = known.subtracting(current).sorted()
         
         for path in newFiles {
-            print("[\(now())] rescan:New_file: \(path)")
+           // print("[\(now())] rescan:New_file: \(path)")
             dbInsert(path)
         }
         
         for path in removedFiles {
-            print("[\(now())] rescan:Removed_file: \(path)")
+           // print("[\(now())] rescan:Removed_file: \(path)")
             dbRemove(path)
         }
         
+        rescanCreated += newFiles.count
+        rescanRemoved += removedFiles.count
         // Apply the difference instead of replacing `known`, so events
         // that arrived during the listing aren't undone.
         
         known.formUnion(newFiles)
         known.subtract(removedFiles)
+        printIfChanged()
     }
 }

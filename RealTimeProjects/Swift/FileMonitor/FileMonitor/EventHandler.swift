@@ -54,15 +54,17 @@ func onFileEvents(
             if label == "New file" {
                 if known.contains(path) { continue }
                 known.insert(path)
+                liveCreated += 1
                 dbInsert(path)
             }
             
             if label == "Removed" {
                 guard known.contains(path) else { continue }
                 known.remove(path)
+                liveRemoved += 1
                 dbRemove(path)
             }
-            print("[\(now())] \(label): \(path)")
+            //print("[\(now())] \(label): \(path)")
         }
     }
 
@@ -72,4 +74,5 @@ func onFileEvents(
         pendingRescan = work
         eventQueue.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
+    printIfChanged()
 }

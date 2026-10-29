@@ -14,6 +14,7 @@
 		D7D5BD163091EB3500FADAE3 /* Rescan.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D5BD153091EB3500FADAE3 /* Rescan.swift */; };
 		D7D5BD183091EB5F00FADAE3 /* EventHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D5BD173091EB5F00FADAE3 /* EventHandler.swift */; };
 		D7D5BD1A3091ED3300FADAE3 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7D5BD193091ED3300FADAE3 /* Database.swift */; };
+		D7E715553093443500060A09 /* Counts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7E715543093443500060A09 /* Counts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -37,6 +38,7 @@
 		D7D5BD153091EB3500FADAE3 /* Rescan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rescan.swift; sourceTree = "<group>"; };
 		D7D5BD173091EB5F00FADAE3 /* EventHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventHandler.swift; sourceTree = "<group>"; };
 		D7D5BD193091ED3300FADAE3 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
+		D7E715543093443500060A09 /* Counts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Counts.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +78,7 @@
 				D7D5BD153091EB3500FADAE3 /* Rescan.swift */,
 				D7D5BD173091EB5F00FADAE3 /* EventHandler.swift */,
 				D7D5BD193091ED3300FADAE3 /* Database.swift */,
+				D7E715543093443500060A09 /* Counts.swift */,
 			);
 			path = FileMonitor;
 			sourceTree = "<group>";
@@ -141,6 +144,7 @@
 				D72A737C3090649300EC832E /* main.swift in Sources */,
 				D7D5BD183091EB5F00FADAE3 /* EventHandler.swift in Sources */,
 				D7D5BD103091EA7500FADAE3 /* Config.swift in Sources */,
+				D7E715553093443500060A09 /* Counts.swift in Sources */,
 				D7D5BD163091EB3500FADAE3 /* Rescan.swift in Sources */,
 				D7D5BD143091EAE800FADAE3 /* Scanner.swift in Sources */,
 				D7D5BD1A3091ED3300FADAE3 /* Database.swift in Sources */,
