@@ -34,7 +34,7 @@ func onFileEvents(
             if userDropped { reasons.append("UserDropped") }
             if kernelDropped { reasons.append("KernelDropped") }
 
-            print("WARNING: Events were dropped under \(path) due to: [\(reasons.joined(separator: ", "))]. A rescan is needed.")
+            print("[\(now())] WARNING: Events were dropped under \(path) due to: [\(reasons.joined(separator: ", "))]. A rescan is needed.")
             needsRescan = true
             continue
         }
@@ -51,7 +51,7 @@ func onFileEvents(
             seen.insert(key)
             if label == "New file" { known.insert(path); dbInsert(path) }
             if label == "Removed" { known.remove(path); dbRemove(path) }
-            print("\(label): \(path)")
+            print("[\(now())] \(label): \(path)")
         }
     }
 

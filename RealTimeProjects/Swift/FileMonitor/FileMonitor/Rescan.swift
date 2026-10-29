@@ -11,15 +11,15 @@ var known: Set<String> = []
 var pendingRescan: DispatchWorkItem?
 
 func rescan() {
-    print("rescan called")
+    print("[\(now())] rescan called")
 
     let current = enumerateFiles(in: folder)
     for path in current.subtracting(known).sorted() {
-        print("rescan:New file: \(path)")
+        print("[\(now())] rescan:New file: \(path)")
         dbInsert(path)
     }
     for path in known.subtracting(current).sorted() {
-        print("rescan:Removed: \(path)")
+        print("[\(now())] rescan:Removed: \(path)")
         dbRemove(path)
     }
     known = current

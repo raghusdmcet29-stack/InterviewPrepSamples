@@ -12,9 +12,9 @@ let fileManager = FileManager.default
 if !fileManager.fileExists(atPath: folderURL.path) {
     do {
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
-        print("Created directory at: \(folderURL.path)")
+        print("[\(now())] Created directory at: \(folderURL.path)")
     } catch {
-        print("Error creating directory: \(error)")
+        print("[\(now())] Error creating directory: \(error)")
     }
 }
 
@@ -29,7 +29,7 @@ guard let stream = FSEventStreamCreate(
     0.5,
     streamFlags
 ) else {
-    print("Could not create the event stream")
+    print("[\(now())] Could not create the event stream")
     exit(1)
 }
 
@@ -37,5 +37,5 @@ FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
 known = enumerateFiles(in: folder)
 FSEventStreamStart(stream)
 openDatabase()
-print("Watching \(folder) in real time. Press Ctrl+C to stop.")
+print("[\(now())] Watching \(folder) in real time. Press Ctrl+C to stop.")
 dispatchMain()
