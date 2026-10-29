@@ -9,18 +9,33 @@ import Foundation
 
 var known: Set<String> = []
 var pendingRescan: DispatchWorkItem?
+let rescanQueue = DispatchQueue(label: "filemonitor.rescan")
 
+// Called on eventQueue. The slow folder listing runs on rescanQueue,
+// so the event queue keeps handling new events while it runs.
 func rescan() {
     print("[\(now())] rescan called")
-
     let current = enumerateFiles(in: folder)
-    for path in current.subtracting(known).sorted() {
-        print("[\(now())] rescan:New file: \(path)")
-        dbInsert(path)
+    
+    // `known` is only changed on eventQueue, so the result is applied there.
+    rescanQueue.async {
+        let newFiles = current.subtracting(known).sorted()
+        let removedFiles = known.subtracting(current).sorted()
+        
+        for path in newFiles {
+            print("[\(now())] rescan:New file: \(path)")
+            dbInsert(path)
+        }
+        
+        for path in removedFiles {
+            print("[\(now())] rescan:Removed: \(path)")
+            dbRemove(path)
+        }
+        
+        // Apply the difference instead of replacing `known`, so events
+        // that arrived during the listing aren't undone.
+        
+        known.formUnion(newFiles)
+        known.subtract(removedFiles)
     }
-    for path in known.subtracting(current).sorted() {
-        print("[\(now())] rescan:Removed: \(path)")
-        dbRemove(path)
-    }
-    known = current
 }

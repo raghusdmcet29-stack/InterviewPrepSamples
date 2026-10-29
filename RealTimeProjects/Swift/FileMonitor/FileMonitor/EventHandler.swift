@@ -8,6 +8,8 @@
 import Foundation
 import CoreServices
 
+let eventQueue = DispatchQueue(label: "filemonitor.events")
+
 func onFileEvents(
     _ stream: ConstFSEventStreamRef,
     _ info: UnsafeMutableRawPointer?,
@@ -59,6 +61,6 @@ func onFileEvents(
         pendingRescan?.cancel()
         let work = DispatchWorkItem { rescan() }
         pendingRescan = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
+        eventQueue.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
 }

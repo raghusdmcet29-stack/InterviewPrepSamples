@@ -12,6 +12,10 @@ let dbFolder = NSHomeDirectory() + "/FileMonitorData"
 var db: OpaquePointer?
 let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
+let dbQueue = DispatchQueue(label: "filemonitor.db")
+var pendingOps: [(path: String, insert: Bool)] = []
+var flushScheduled = false
+
 func openDatabase() {
     try? FileManager.default.createDirectory(atPath: dbFolder, withIntermediateDirectories: true)
 
@@ -29,25 +33,45 @@ func openDatabase() {
 }
 
 func dbInsert(_ path: String) {
-    var stmt: OpaquePointer?
-    let sql = "INSERT OR IGNORE INTO known_files (path) VALUES (?);"
-    guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-        print("[\(now())] dbInsert:DB prepare failed")
-        return
-    }
-    sqlite3_bind_text(stmt, 1, path, -1, SQLITE_TRANSIENT)
-    sqlite3_step(stmt)
-    sqlite3_finalize(stmt)
+    enqueueDB(path: path, insert: true)
 }
 
 func dbRemove(_ path: String) {
-    var stmt: OpaquePointer?
-    let sql = "DELETE FROM known_files WHERE path = ?;"
-    guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
-        print("[\(now())] dbRemove:DB prepare failed")
-        return
+    enqueueDB(path: path, insert: false)
+}
+
+func enqueueDB(path: String, insert: Bool) {
+    dbQueue.async {
+        pendingOps.append((path: path, insert: insert))
+        if !flushScheduled {
+            flushScheduled = true
+            dbQueue.asyncAfter(deadline: .now() + 0.2) { flushDB() }
+        }
     }
-    sqlite3_bind_text(stmt, 1, path, -1, SQLITE_TRANSIENT)
-    sqlite3_step(stmt)
-    sqlite3_finalize(stmt)
+}
+
+func flushDB() {
+    flushScheduled = false
+    let ops = pendingOps
+    pendingOps.removeAll()
+    if ops.isEmpty { return }
+    
+    var insertStmt: OpaquePointer?
+    var deleteStmt: OpaquePointer?
+    
+    sqlite3_prepare_v2(db, "INSERT OR IGNORE INTO known_files (path) VALUES (?);", -1, &insertStmt, nil)
+    sqlite3_prepare_v2(db, "DELETE FROM known_files WHERE path = ?;", -1, &deleteStmt, nil)
+    
+    sqlite3_exec(db, "BEGIN TRANSACTION;", nil, nil, nil)
+    for op in ops {
+        let stmt = op.insert ? insertStmt : deleteStmt
+        sqlite3_reset(stmt)
+        sqlite3_bind_text(stmt, 1, op.path, -1, SQLITE_TRANSIENT)
+        sqlite3_step(stmt)
+    }
+    sqlite3_exec(db, "COMMIT;", nil, nil, nil)
+    
+    sqlite3_finalize(insertStmt)
+    sqlite3_finalize(deleteStmt)
+    print("[\(now())] DB flushed \(ops.count) changes")
 }

@@ -33,7 +33,7 @@ guard let stream = FSEventStreamCreate(
     exit(1)
 }
 
-FSEventStreamSetDispatchQueue(stream, DispatchQueue.main)
+FSEventStreamSetDispatchQueue(stream, eventQueue)
 known = enumerateFiles(in: folder)
 FSEventStreamStart(stream)
 openDatabase()
