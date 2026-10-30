@@ -9,7 +9,7 @@ import Foundation
 
 var known: Set<String> = []
 var pendingRescan: DispatchWorkItem?
-let rescanQueue = DispatchQueue(label: "filemonitor.rescan")
+
 
 // Called on eventQueue. The slow folder listing runs on rescanQueue,
 // so the event queue keeps handling new events while it runs.
