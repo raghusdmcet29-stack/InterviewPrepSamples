@@ -15,28 +15,27 @@ let rescanQueue = DispatchQueue(label: "filemonitor.rescan")
 // so the event queue keeps handling new events while it runs.
 func rescan() {
     print("[\(now())] rescan called")
-    let current = enumerateFiles(in: folder)
-    
-    // `known` is only changed on eventQueue, so the result is applied there.
-    rescanQueue.async {
+
+    eventQueue.async {
+        // Listing and comparison happen together on eventQueue, so no event
+        // can run between them and make the snapshot stale.
+        let current = enumerateFiles(in: folder)
         let newFiles = current.subtracting(known).sorted()
         let removedFiles = known.subtracting(current).sorted()
-        
+
         for path in newFiles {
            // print("[\(now())] rescan:New_file: \(path)")
             dbInsert(path)
         }
-        
+
         for path in removedFiles {
            // print("[\(now())] rescan:Removed_file: \(path)")
             dbRemove(path)
         }
-        
+
         rescanCreated += newFiles.count
         rescanRemoved += removedFiles.count
-        // Apply the difference instead of replacing `known`, so events
-        // that arrived during the listing aren't undone.
-        
+
         known.formUnion(newFiles)
         known.subtract(removedFiles)
         printIfChanged()
