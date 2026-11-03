@@ -64,6 +64,19 @@ func onFileEvents(
                 liveRemoved += 1
                 dbRemove(path)
             }
+            if label == "Renamed" {
+                if FileManager.default.fileExists(atPath: path) {
+                    if !known.contains(path) {
+                        known.insert(path)
+                        liveCreated += 1
+                        dbInsert(path)
+                    }
+                } else if known.contains(path) {
+                    known.remove(path)
+                    liveRemoved += 1
+                    dbRemove(path)
+                }
+            }
             //print("[\(now())] \(label): \(path)")
         }
     }
