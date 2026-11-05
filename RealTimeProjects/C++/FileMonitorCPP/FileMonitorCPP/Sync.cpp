@@ -14,6 +14,8 @@ void syncFolder(const std::string& folder) {
     std::set<std::string> onDisk = listFiles(folder);
     std::set<std::string> inDatabase = loadAllPaths();
 
+    beginTransaction();
+    
     // On disk but not in the database: add them.
     for (const auto& path : onDisk) {
         if (inDatabase.count(path) == 0) {
@@ -27,4 +29,6 @@ void syncFolder(const std::string& folder) {
             handleDeleted(path);
         }
     }
+    
+    commitTransaction();
 }

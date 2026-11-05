@@ -30,4 +30,10 @@ int countPaths();
 // Returns every path currently stored in known_files.
 std::set<std::string> loadAllPaths();
 
+// Starts a transaction. Writes are held until commitTransaction.
+bool beginTransaction();
+
+// Saves all writes made since beginTransaction.
+bool commitTransaction();
+
 #endif /* Database_hpp */

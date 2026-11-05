@@ -102,3 +102,11 @@ std::set<std::string> loadAllPaths() {
     sqlite3_finalize(stmt);
     return result;
 }
+
+bool beginTransaction() {
+    return sqlite3_exec(db, "BEGIN;", nullptr, nullptr, nullptr) == SQLITE_OK;
+}
+
+bool commitTransaction() {
+    return sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr) == SQLITE_OK;
+}

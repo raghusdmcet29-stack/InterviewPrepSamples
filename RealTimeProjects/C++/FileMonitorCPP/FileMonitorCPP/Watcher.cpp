@@ -12,6 +12,9 @@
 #include <iostream>
 #include "EventHandler.hpp"
 #include "Scanner.hpp"
+#include "Sync.hpp"
+
+static std::string watchedFolder;
 
 static void eventCallback(ConstFSEventStreamRef stream, void* info,
                           size_t numEvents, void* eventPaths,
@@ -21,8 +24,16 @@ static void eventCallback(ConstFSEventStreamRef stream, void* info,
     char** paths = static_cast<char**>(eventPaths);
     
     for (size_t i = 0; i < numEvents; i++) {
+        
+        if (eventFlags[i] & kFSEventStreamEventFlagMustScanSubDirs) {
+                std::cout << "events dropped, running sync" << std::endl;
+                syncFolder(watchedFolder);
+                break;
+            }
+        
         std::string path = paths[i];
-
+        
+        
         // Skip hidden files such as .DS_Store
         std::string name = std::filesystem::path(path).filename().string();
         if (!name.empty() && name[0] == '.') {
@@ -39,6 +50,7 @@ static void eventCallback(ConstFSEventStreamRef stream, void* info,
 }
 
 void startWatching(const std::string& folder){
+    watchedFolder = folder;
     CFStringRef folderRef = CFStringCreateWithCString(nullptr, folder.c_str(), kCFStringEncodingUTF8);
     CFArrayRef folders = CFArrayCreate(nullptr, (const void**)&folderRef, 1, nullptr);
     
