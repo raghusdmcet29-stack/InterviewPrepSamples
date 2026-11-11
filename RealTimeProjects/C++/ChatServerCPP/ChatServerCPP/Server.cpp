@@ -7,9 +7,15 @@
 
 #include "Server.hpp"
 #include <iostream>
+#include <map>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
+
+
+std::vector<pollfd> fds;  // the one real definition
+std::map<int, std::string> clientBuffers;  // socket number -> partial text not yet a full line
+const size_t MAX_LINE = 1024;  // longest line we allow before disconnecting
 
 int createServerSocket() {
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -34,6 +40,14 @@ bool startListening(int server, int port) {
         std::cerr << "listen failed\n";
         return false;
     }
+    
+    // Server.cpp, after listen() succeeds
+    pollfd listenEntry;
+    listenEntry.fd = server;    // the socket we created earlier
+    listenEntry.events = POLLIN;   // wake up when a new client is waiting
+    listenEntry.revents = 0;       // the OS fills this in later
+    fds.push_back(listenEntry);
+    
     return true;
 }
 
@@ -61,4 +75,79 @@ bool sendLine(int client, const std::string& text) {
     std::string data = text + "\n";
     ssize_t sent = write(client, data.c_str(), data.size());
     return sent == static_cast<ssize_t>(data.size());
+}
+
+void runServer(int server) {
+    while (true) {
+        int ready = poll(fds.data(), static_cast<nfds_t>(fds.size()), -1);
+        if (ready < 0) {
+            std::cerr << "poll failed\n";
+            break;
+        }
+
+        // Step 2: is the listening socket ready? Then a client is waiting.
+        if (fds[0].revents & POLLIN) {
+            int client = acceptClient(server);
+            if (client >= 0) {
+                pollfd clientEntry;
+                clientEntry.fd = client;
+                clientEntry.events = POLLIN;   // wake up when this client sends data
+                clientEntry.revents = 0;
+                fds.push_back(clientEntry);
+                std::cout << "client " << client << " connected\n";
+            }
+        }   // <- listener block ends here
+        
+        // Step 3: client sockets go here
+        for (size_t i = 1; i < fds.size(); ++i) {
+            if (!(fds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
+                continue;
+            }
+            
+            int fd = fds[i].fd;
+            char buf[1024];
+            ssize_t n = read(fd, buf, sizeof(buf));
+            
+            if (n <= 0) {
+                // 0 means the client closed its terminal; negative means an error
+                std::cout << "client " << fd << " disconnected\n";
+                close(fd);
+                clientBuffers.erase(fd);   // throw away any unfinished text
+                fds.erase(fds.begin() + i);
+                continue;
+            }
+            
+            // Add the new bytes to this client's buffer
+            std::string& pending = clientBuffers[fd];
+            pending.append(buf, n);
+            
+            // Print complete lines, rejecting any line longer than MAX_LINE
+            bool tooLong = false;
+            size_t newline;
+            while ((newline = pending.find('\n')) != std::string::npos) {
+                if (newline > MAX_LINE) {
+                    tooLong = true;
+                    break;
+                }
+                std::string line = pending.substr(0, newline);
+                pending.erase(0, newline + 1);
+                std::cout << "client " << fd << ": " << line << "\n";
+            }
+            
+            // Also reject unfinished text that is already too long
+            if (!tooLong && pending.size() > MAX_LINE) {
+                tooLong = true;
+            }
+            
+            
+            if (tooLong) {
+                std::cout << "client " << fd << " sent a line that is too long, disconnecting\n";
+                close(fd);
+                clientBuffers.erase(fd);
+                fds.erase(fds.begin() + i);
+            }
+        }
+    }
+    std::cout << "runServer came out from pooling: ";
+
 }
