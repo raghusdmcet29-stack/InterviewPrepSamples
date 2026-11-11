@@ -22,5 +22,6 @@ int acceptClient(int server);
 std::string readLine(int client);
 bool sendLine(int client, const std::string& text);
 void runServer(int server);
+bool setNonBlocking(int fd);
 void broadcast(int sender, const std::string& message, std::set<int>& doomed);
 #endif /* Server_hpp */

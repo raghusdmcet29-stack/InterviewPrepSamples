@@ -11,7 +11,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
-
+#include <fcntl.h>
 
 std::vector<pollfd> fds;  // the one real definition
 std::map<int, std::string> clientBuffers;  // socket number -> partial text not yet a full line
@@ -81,9 +81,18 @@ void broadcast(int sender, const std::string& message, std::set<int>& doomed) {
     for (size_t j = 1; j < fds.size(); ++j) {
         int fd = fds[j].fd;
         if (fd != sender && !sendLine(fd, message)) {
+            std::cerr << "send to " << fd << " failed, errno " << errno << "\n";
             doomed.insert(fd);   // remember it; remove after this pass
         }
     }
+}
+
+bool setNonBlocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) {
+        return false;
+    }
+    return fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0;
 }
 
 void runServer(int server) {
@@ -98,12 +107,17 @@ void runServer(int server) {
         if (fds[0].revents & POLLIN) {
             int client = acceptClient(server);
             if (client >= 0) {
-                pollfd clientEntry;
-                clientEntry.fd = client;
-                clientEntry.events = POLLIN;   // wake up when this client sends data
-                clientEntry.revents = 0;
-                fds.push_back(clientEntry);
-                std::cout << "client " << client << " connected\n";
+                if (!setNonBlocking(client)) {
+                    std::cerr << "fcntl failed\n";
+                    close(client);
+                }else {
+                    pollfd clientEntry;
+                    clientEntry.fd = client;
+                    clientEntry.events = POLLIN;   // wake up when this client sends data
+                    clientEntry.revents = 0;
+                    fds.push_back(clientEntry);
+                    std::cout << "client " << client << " connected\n";
+                }
             }
         }   // <- listener block ends here
         
@@ -118,6 +132,10 @@ void runServer(int server) {
             int fd = fds[i].fd;
             char buf[1024];
             ssize_t n = read(fd, buf, sizeof(buf));
+            
+            if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+                continue;   // nothing to read yet, not a disconnect
+            }
             
             if (n <= 0) {
                 // 0 means the client closed its terminal; negative means an error
