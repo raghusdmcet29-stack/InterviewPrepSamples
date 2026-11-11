@@ -16,6 +16,7 @@
 std::vector<pollfd> fds;  // the one real definition
 std::map<int, std::string> clientBuffers;  // socket number -> partial text not yet a full line
 const size_t MAX_LINE = 1024;  // longest line we allow before disconnecting
+std::map<int, std::string> clientOutput;  // socket number -> bytes waiting to be sent
 
 int createServerSocket() {
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -77,22 +78,36 @@ bool sendLine(int client, const std::string& text) {
     return sent == static_cast<ssize_t>(data.size());
 }
 
-void broadcast(int sender, const std::string& message, std::set<int>& doomed) {
+void broadcast(int sender, const std::string& message) {
+    std::string data = message + "\n";
     for (size_t j = 1; j < fds.size(); ++j) {
         int fd = fds[j].fd;
-        if (fd != sender && !sendLine(fd, message)) {
-            std::cerr << "send to " << fd << " failed, errno " << errno << "\n";
-            doomed.insert(fd);   // remember it; remove after this pass
+        if (fd != sender) {
+            clientOutput[fd] += data;        // queue it; the flush step sends it
+            fds[j].events |= POLLOUT;        // ask poll() to tell us when this socket can take data
         }
     }
 }
-
 bool setNonBlocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) {
         return false;
     }
     return fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0;
+}
+
+void flushOutput(int fd) {
+    std::string& out = clientOutput[fd];
+    while (!out.empty()) {
+        ssize_t sent = write(fd, out.data(), out.size());
+        if (sent < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                return;   // socket is full; keep the rest for later
+            }
+            return;       // real error; the caller will see it on the next read
+        }
+        out.erase(0, sent);
+    }
 }
 
 void runServer(int server) {
@@ -121,12 +136,20 @@ void runServer(int server) {
             }
         }   // <- listener block ends here
         
-        std::set<int> doomed;
         
         // Step 3: client sockets go here
         for (size_t i = 1; i < fds.size(); ++i) {
             if (!(fds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
                 continue;
+            }
+            
+            // Output: send queued bytes when the socket can take them
+            if (fds[i].revents & POLLOUT) {
+                flushOutput(fds[i].fd);
+            }
+            
+            if (clientOutput[fds[i].fd].empty()) {
+                fds[i].events &= ~POLLOUT;   // nothing left to send; stop watching for writability
             }
             
             int fd = fds[i].fd;
@@ -162,7 +185,7 @@ void runServer(int server) {
                 pending.erase(0, newline + 1);
                 std::string labeled = "client " + std::to_string(fd) + ": " + line;
                 std::cout << labeled << "\n";           // server log
-                broadcast(fd, labeled, doomed);
+                broadcast(fd, labeled);
             }
             
             // Also reject unfinished text that is already too long
@@ -177,17 +200,6 @@ void runServer(int server) {
                 fds.erase(fds.begin() + i);
             }
         }
-        
-        // Sweep after the loop: remove clients whose send failed
-        for (size_t j = fds.size(); j-- > 1; ) {
-            if (doomed.count(fds[j].fd)) {
-                std::cout << "client " << fds[j].fd << " removed (send failed)\n";
-                close(fds[j].fd);
-                clientBuffers.erase(fds[j].fd);
-                fds.erase(fds.begin() + j);
-            }
-        }
-        doomed.clear();
     }
     std::cout << "runServer came out from pooling: ";
 
