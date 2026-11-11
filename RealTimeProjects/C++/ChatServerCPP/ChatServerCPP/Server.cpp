@@ -77,6 +77,15 @@ bool sendLine(int client, const std::string& text) {
     return sent == static_cast<ssize_t>(data.size());
 }
 
+void broadcast(int sender, const std::string& message, std::set<int>& doomed) {
+    for (size_t j = 1; j < fds.size(); ++j) {
+        int fd = fds[j].fd;
+        if (fd != sender && !sendLine(fd, message)) {
+            doomed.insert(fd);   // remember it; remove after this pass
+        }
+    }
+}
+
 void runServer(int server) {
     while (true) {
         int ready = poll(fds.data(), static_cast<nfds_t>(fds.size()), -1);
@@ -97,6 +106,8 @@ void runServer(int server) {
                 std::cout << "client " << client << " connected\n";
             }
         }   // <- listener block ends here
+        
+        std::set<int> doomed;
         
         // Step 3: client sockets go here
         for (size_t i = 1; i < fds.size(); ++i) {
@@ -131,14 +142,15 @@ void runServer(int server) {
                 }
                 std::string line = pending.substr(0, newline);
                 pending.erase(0, newline + 1);
-                std::cout << "client " << fd << ": " << line << "\n";
+                std::string labeled = "client " + std::to_string(fd) + ": " + line;
+                std::cout << labeled << "\n";           // server log
+                broadcast(fd, labeled, doomed);
             }
             
             // Also reject unfinished text that is already too long
             if (!tooLong && pending.size() > MAX_LINE) {
                 tooLong = true;
             }
-            
             
             if (tooLong) {
                 std::cout << "client " << fd << " sent a line that is too long, disconnecting\n";
@@ -147,6 +159,17 @@ void runServer(int server) {
                 fds.erase(fds.begin() + i);
             }
         }
+        
+        // Sweep after the loop: remove clients whose send failed
+        for (size_t j = fds.size(); j-- > 1; ) {
+            if (doomed.count(fds[j].fd)) {
+                std::cout << "client " << fds[j].fd << " removed (send failed)\n";
+                close(fds[j].fd);
+                clientBuffers.erase(fds[j].fd);
+                fds.erase(fds.begin() + j);
+            }
+        }
+        doomed.clear();
     }
     std::cout << "runServer came out from pooling: ";
 

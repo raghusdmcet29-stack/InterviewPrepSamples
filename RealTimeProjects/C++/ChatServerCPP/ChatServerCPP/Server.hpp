@@ -12,6 +12,7 @@
 #include <iostream>
 #include <poll.h>
 #include <vector>
+#include <set>
 #pragma once
 
 extern std::vector<pollfd> fds; // every socket the server is watching
@@ -21,4 +22,5 @@ int acceptClient(int server);
 std::string readLine(int client);
 bool sendLine(int client, const std::string& text);
 void runServer(int server);
+void broadcast(int sender, const std::string& message, std::set<int>& doomed);
 #endif /* Server_hpp */
