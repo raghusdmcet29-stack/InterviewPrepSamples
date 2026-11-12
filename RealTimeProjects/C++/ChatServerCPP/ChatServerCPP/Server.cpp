@@ -190,7 +190,7 @@ void runServer(int server) {
                 
                 // /leave: go back to having no room
                 if (line == "/leave") {
-                    clientRoom[fd].clear();
+                    leaveRoom(clientRoom, fd);
                     clientOutput[fd] += "left the room\n";
                     fds[i].events |= POLLOUT;
                     continue;
@@ -227,7 +227,7 @@ void runServer(int server) {
                         fds[i].events |= POLLOUT;
                         continue;
                     }
-                    clientRoom[fd] = room;
+                    joinRoom(clientRoom, fd, room);
                     clientOutput[fd] += "joined room " + room + "\n";
                     fds[i].events |= POLLOUT;
                     continue;

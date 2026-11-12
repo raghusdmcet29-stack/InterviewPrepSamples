@@ -24,4 +24,6 @@ bool removeMember(Room& room, const std::string& name);
 bool roomExists(const std::map<std::string, Room>& rooms, const std::string& name);
 bool sameRoom(const std::map<int, std::string>& clientRoom, int a, int b);
 bool inRoom(const std::map<int, std::string>& clientRoom, int client);
+void joinRoom(std::map<int, std::string>& clientRoom, int client, const std::string& room);
+void leaveRoom(std::map<int, std::string>& clientRoom, int client);
 #endif /* Room_hpp */

@@ -49,3 +49,11 @@ bool inRoom(const std::map<int, std::string>& clientRoom, int client) {
     // the client is in the map  and its room name is not blank
     return it != clientRoom.end() && !it->second.empty();
 }
+
+void joinRoom(std::map<int, std::string>& clientRoom, int client, const std::string& room) {
+    clientRoom[client] = room;
+}
+
+void leaveRoom(std::map<int, std::string>& clientRoom, int client) {
+    clientRoom[client].clear();
+}
