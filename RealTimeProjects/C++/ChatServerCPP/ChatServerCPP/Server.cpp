@@ -186,6 +186,16 @@ void runServer(int server) {
                 }
                 std::string line = pending.substr(0, newline);
                 pending.erase(0, newline + 1);
+                
+                // /leave: go back to having no room
+                if (line == "/leave") {
+                    clientRoom[fd].clear();
+                    clientOutput[fd] += "left the room\n";
+                    fds[i].events |= POLLOUT;
+                    continue;
+                }
+                
+                
                 // 1. /join command
                 if (line == "/join" || line.rfind("/join ", 0) == 0) {
                     std::string room = line.size() > 6 ? line.substr(6) : "";
