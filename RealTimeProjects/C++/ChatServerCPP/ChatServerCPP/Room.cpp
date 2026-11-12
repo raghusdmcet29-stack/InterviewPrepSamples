@@ -32,3 +32,20 @@ void printMembers(const Room& room) {
         std::cout << "  - " << name << "\n";
     }
 }
+
+bool sameRoom(const std::map<int, std::string>& clientRoom, int a, int b) {
+    auto ia = clientRoom.find(a);  // iterator for client a, or end()
+    auto ib = clientRoom.find(b);  // iterator for client b, or end()
+    if (ia == clientRoom.end() || ib == clientRoom.end()) {
+        // one of them isn't in the map, so not the same room
+        return false;
+    }
+    // a's room name is not blank and it matches b's room name
+    return !ia->second.empty() && ia->second == ib->second;
+}
+
+bool inRoom(const std::map<int, std::string>& clientRoom, int client) {
+    auto it = clientRoom.find(client); // iterator for this client, or end()
+    // the client is in the map  and its room name is not blank
+    return it != clientRoom.end() && !it->second.empty();
+}

@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include "Room.hpp"
 
 std::vector<pollfd> fds;  // the one real definition
 std::map<int, std::string> clientBuffers;  // socket number -> partial text not yet a full line
@@ -83,7 +84,7 @@ void broadcast(int sender, const std::string& message) {
     std::string data = message + "\n";
     for (size_t j = 1; j < fds.size(); ++j) {
         int fd = fds[j].fd;
-        if (fd != sender && clientRoom[fd] == clientRoom[sender]) {
+        if (fd != sender && sameRoom(clientRoom, fd, sender)) {
             clientOutput[fd] += data;        // queue it; the flush step sends it
             fds[j].events |= POLLOUT;        // ask poll() to tell us when this socket can take data
         }
@@ -191,6 +192,24 @@ void runServer(int server) {
                 if (line == "/leave") {
                     clientRoom[fd].clear();
                     clientOutput[fd] += "left the room\n";
+                    fds[i].events |= POLLOUT;
+                    continue;
+                }
+                
+                // /who: list everyone in my room
+                if (line == "/who") {
+                    if (clientRoom[fd].empty()) {
+                        clientOutput[fd] += "join a room first with /join <name>\n";
+                    } else {
+                        std::string names;
+                        for (size_t j = 1; j < fds.size(); ++j) {
+                            int other = fds[j].fd;
+                            if (sameRoom(clientRoom, other, fd)) {
+                                names += "client " + std::to_string(other) + " ";
+                            }
+                        }
+                        clientOutput[fd] += "in " + clientRoom[fd] + ": " + names + "\n";
+                    }
                     fds[i].events |= POLLOUT;
                     continue;
                 }
