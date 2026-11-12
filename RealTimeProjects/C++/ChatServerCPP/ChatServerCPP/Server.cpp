@@ -17,6 +17,7 @@ std::vector<pollfd> fds;  // the one real definition
 std::map<int, std::string> clientBuffers;  // socket number -> partial text not yet a full line
 const size_t MAX_LINE = 1024;  // longest line we allow before disconnecting
 std::map<int, std::string> clientOutput;  // socket number -> bytes waiting to be sent
+std::map<int, std::string> clientRoom;   // socket number -> room name
 
 int createServerSocket() {
     int server = socket(AF_INET, SOCK_STREAM, 0);
@@ -82,7 +83,7 @@ void broadcast(int sender, const std::string& message) {
     std::string data = message + "\n";
     for (size_t j = 1; j < fds.size(); ++j) {
         int fd = fds[j].fd;
-        if (fd != sender) {
+        if (fd != sender && clientRoom[fd] == clientRoom[sender]) {
             clientOutput[fd] += data;        // queue it; the flush step sends it
             fds[j].events |= POLLOUT;        // ask poll() to tell us when this socket can take data
         }
@@ -139,7 +140,7 @@ void runServer(int server) {
         
         // Step 3: client sockets go here
         for (size_t i = 1; i < fds.size(); ++i) {
-            if (!(fds[i].revents & (POLLIN | POLLHUP | POLLERR))) {
+             if (!(fds[i].revents & (POLLIN | POLLOUT | POLLHUP | POLLERR)))  {
                 continue;
             }
             
@@ -165,7 +166,9 @@ void runServer(int server) {
                 std::cout << "client " << fd << " disconnected\n";
                 close(fd);
                 clientBuffers.erase(fd);   // throw away any unfinished text
+                clientRoom.erase(fd);
                 fds.erase(fds.begin() + i);
+                --i;
                 continue;
             }
             
@@ -183,6 +186,38 @@ void runServer(int server) {
                 }
                 std::string line = pending.substr(0, newline);
                 pending.erase(0, newline + 1);
+                // 1. /join command
+                if (line == "/join" || line.rfind("/join ", 0) == 0) {
+                    std::string room = line.size() > 6 ? line.substr(6) : "";
+                    size_t space = room.find(' ');
+                    if (space != std::string::npos) {
+                        room = room.substr(0, space);
+                    }
+                    if (room.empty()) {
+                        clientOutput[fd] += "usage: /join <name>\n";
+                        fds[i].events |= POLLOUT;
+                        continue;
+                    }
+                    clientRoom[fd] = room;
+                    clientOutput[fd] += "joined room " + room + "\n";
+                    fds[i].events |= POLLOUT;
+                    continue;
+                }
+
+                // 2. Not in a room yet: remind them (this also covers blank lines)
+                if (clientRoom[fd].empty()) {
+                    clientOutput[fd] += "join a room first with /join <name>\n";
+                    fds[i].events |= POLLOUT;
+                    continue;
+                }
+
+                // 3. In a room, but the line is blank
+                if (line.empty()) {
+                    clientOutput[fd] += "message is empty, nothing sent\n";
+                    fds[i].events |= POLLOUT;
+                    continue;
+                }
+                // 4. Normal chat message
                 std::string labeled = "client " + std::to_string(fd) + ": " + line;
                 std::cout << labeled << "\n";           // server log
                 broadcast(fd, labeled);
@@ -197,7 +232,9 @@ void runServer(int server) {
                 std::cout << "client " << fd << " sent a line that is too long, disconnecting\n";
                 close(fd);
                 clientBuffers.erase(fd);
+                clientRoom.erase(fd);
                 fds.erase(fds.begin() + i);
+                --i;
             }
         }
     }
