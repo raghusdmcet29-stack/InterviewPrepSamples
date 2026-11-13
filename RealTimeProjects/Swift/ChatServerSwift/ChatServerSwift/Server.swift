@@ -157,21 +157,17 @@ class Server {
             queue(fd, "left the room")
             return
         }
+        if !inRoom(clientRoom, fd) {
+            queue(fd, "join a room first with /join <name>")
+            return
+        }
         if line == "/who" {
-            if !inRoom(clientRoom, fd) {
-                queue(fd, "join a room first with /join <name>")
-                return
-            }
             var names: [String] = []
             for entry in fds.dropFirst() where sameRoom(clientRoom, entry.fd, fd) {
                 names.append("client \(entry.fd)")
             }
             let room = clientRoom[fd] ?? ""
             queue(fd, "in \(room): " + names.joined(separator: " "))
-            return
-        }
-        if !inRoom(clientRoom, fd) {
-            queue(fd, "join a room first with /join <name>")
             return
         }
         let labeled = "client \(fd): \(line)"
