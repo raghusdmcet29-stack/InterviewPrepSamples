@@ -20,7 +20,8 @@ class Server {
     var clientBuffers: [Int32: [UInt8]] = [:]  // socket -> bytes received but not yet a full line
     var clientOutput: [Int32: [UInt8]] = [:]   // socket -> bytes waiting to be sent
     let listener : Int32
-
+    let maxLine = 1024   // longest line we allow before disconnecting
+    
     init(port: UInt16) throws {
         listener = socket(AF_INET, SOCK_STREAM, 0)
         guard listener >= 0 else {
@@ -72,7 +73,11 @@ class Server {
                         disconnect(at: i)
                         continue   // don't add 1: the next client has shifted into slot i
                     }
-                    handleLines(fd)
+                    if !handleLines(fd) {
+                        print("client \(fd) sent a line that is too long, disconnecting")
+                        disconnect(at: i)
+                        continue
+                    }
                 }
                 if (revents & Int16(POLLOUT)) != 0 {
                     flushOutput(fd)
@@ -128,17 +133,24 @@ class Server {
         return true
     }
 
-    func handleLines(_ fd: Int32) {
+    func handleLines(_ fd: Int32) -> Bool {
         guard var pending = clientBuffers[fd] else {
-            return
+            return false
         }
         // 10 is the byte for "\n"
         while let newline = pending.firstIndex(of: 10) {
+            if newline > maxLine {
+                return false
+            }
             let line = String(decoding: pending[0..<newline], as: UTF8.self)
             pending.removeSubrange(0...newline)
             handleLine(fd, line)
         }
+        if pending.count > maxLine {
+            return false   // unfinished text is already too long
+        }
         clientBuffers[fd] = pending
+        return true
     }
 
     func handleLine(_ fd: Int32, _ line: String) {
