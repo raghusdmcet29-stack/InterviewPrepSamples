@@ -31,29 +31,46 @@ int main(int argc, char* argv[]){
     const std::streamsize chunkSize = 4096;
     std::vector<char> buffer(chunkSize);
     
+    
+    // fingerprint -> list of distinct chunks that have this fingerprint
+    std::map<std::size_t, std::vector<std::string>> store;
+    // the recipe: for each chunk in the file, its fingerprint and its position on that shelf
+    std::vector<std::pair<std::size_t, std::size_t>> order;
+    
     file.seekg(0, std::ios::beg);
     int chunkCount = 0;
-    std::map<std::size_t, std::string> store;
-    std::vector<std::size_t> order;
     while (file) {
-        file.read(buffer.data(),chunkSize);
+        file.read(buffer.data(), chunkSize);
         std::streamsize got = file.gcount();
         if (got > 0) {
             chunkCount++;
             std::string chunk(buffer.data(), got);
             std::size_t fingerprint = std::hash<std::string>{}(chunk);
-            order.push_back(fingerprint);
             
-            if (store.count(fingerprint) == 0) {
-                store[fingerprint] = chunk;
+            std::vector<std::string> &shelf = store[fingerprint];
+            std::size_t position = shelf.size();
+            for (std::size_t p = 0; p < shelf.size(); p++) {
+                if (shelf[p] == chunk) {
+                    position = p;
+                    break;
+                }
+            }
+            if (position == shelf.size()) {
+                shelf.push_back(chunk);
                 std::cout << "chunk " << chunkCount << ": new, " << got << " bytes\n";
             }else {
                 std::cout << "chunk " << chunkCount << ": duplicate\n";
             }
+            order.emplace_back(fingerprint, position);
         }
     }
+    std::size_t uniqueCount = 0;
+    for (const auto &entry : store) {
+        uniqueCount += entry.second.size();
+    }
     std::cout << "total chunks: " << order.size()
-              << ", unique stored: " << store.size() << "\n";
+                  << ", unique stored: " << uniqueCount << "\n";
+    
     
     std::string inputPath = argv[1];
     std::string base = inputPath;
@@ -70,8 +87,8 @@ int main(int argc, char* argv[]){
         return 1;
     }
     
-    for (std::size_t fingerprint : order) {
-        const std::string &piece = store.at(fingerprint);
+    for (const auto &entry : order) {
+        const std::string &piece = store.at(entry.first)[entry.second];
         out.write(piece.data(), piece.size());
     }
     std::cout << "wrote " << outputPath << "\n";
