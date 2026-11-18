@@ -21,3 +21,20 @@ func fingerprint(of data: Data) -> UInt64 {
     }
     return hash
 }
+
+struct StoreError: Error {
+    let message: String
+}
+
+struct ChunkLocation {
+    let offset: UInt64   // where the chunk starts in store.dat
+    let length: Int      // how many bytes it takes
+}
+
+func readChunk(from handle: FileHandle, at loc: ChunkLocation) throws -> Data {
+    try handle.seek(toOffset: loc.offset)
+    guard let data = try handle.read(upToCount: loc.length) else {
+        throw StoreError(message: "could not read chunk at \(loc.offset)")
+    }
+    return data
+}

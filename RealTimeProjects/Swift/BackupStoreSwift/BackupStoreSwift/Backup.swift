@@ -15,7 +15,16 @@ func backupFile(path: String) throws {
     let input = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
     defer { try? input.close() }
     
-    var shelves: [UInt64: [Data]] = [:]   // temporary: chunk bytes still in memory
+    guard let storeWriter = FileHandle(forWritingAtPath: "store.dat"),
+          let storeReader = FileHandle(forReadingAtPath: "store.dat") else {
+        throw StoreError(message: "could not open store.dat")
+    }
+    defer { try? storeWriter.close() }
+    defer { try? storeReader.close() }
+    
+    
+    var shelves: [UInt64: [ChunkLocation]] = [:]   // each shelf holds locations in store.dat
+    var storeEnd: UInt64 = 0                        // where the next new chunk goes
     var chunkCount = 0
     var newCount = 0
     var dupCount = 0
@@ -26,15 +35,31 @@ func backupFile(path: String) throws {
         
         let fp = fingerprint(of: chunk)
         let shelf = shelves[fp] ?? []
-        if shelf.contains(chunk) {
+        
+        // compare with each saved chunk on this shelf, reading its bytes from store.dat
+        var matched = false
+        for loc in shelf {
+            if try readChunk(from: storeReader, at: loc) == chunk {
+                matched = true
+                break
+            }
+        }
+        if matched {
             dupCount += 1
             print("  duplicate")
-        }else {
-            shelves[fp, default: []].append(chunk)
+        } else {
+            let loc = ChunkLocation(offset: storeEnd, length: chunk.count)
+            try storeWriter.seek(toOffset: storeEnd)
+            try storeWriter.write(contentsOf: chunk)
+            storeEnd += UInt64(chunk.count)
+            
+            shelves[fp, default: []].append(loc)
             newCount += 1
             print("  new")
         }
+        
     }
     print("new: \(newCount), duplicate: \(dupCount)")
     print("total chunks: \(chunkCount)")
+    print("store.dat is \(storeEnd) bytes")
 }
