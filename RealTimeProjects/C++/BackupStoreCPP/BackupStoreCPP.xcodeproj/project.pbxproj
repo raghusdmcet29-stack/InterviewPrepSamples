@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D7BB56CB30AD73B7004377D7 /* ChunkStore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D7BB56C930AD73B7004377D7 /* ChunkStore.cpp */; };
+		D7BB56CE30AD743C004377D7 /* Backup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D7BB56CC30AD743C004377D7 /* Backup.cpp */; };
+		D7BB56D130AD798E004377D7 /* Restore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D7BB56CF30AD798E004377D7 /* Restore.cpp */; };
 		D7F9965F30AC472000C92C3E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D7F9965E30AC472000C92C3E /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +26,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D7BB56C930AD73B7004377D7 /* ChunkStore.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ChunkStore.cpp; sourceTree = "<group>"; };
+		D7BB56CA30AD73B7004377D7 /* ChunkStore.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ChunkStore.hpp; sourceTree = "<group>"; };
+		D7BB56CC30AD743C004377D7 /* Backup.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Backup.cpp; sourceTree = "<group>"; };
+		D7BB56CD30AD743C004377D7 /* Backup.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Backup.hpp; sourceTree = "<group>"; };
+		D7BB56CF30AD798E004377D7 /* Restore.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Restore.cpp; sourceTree = "<group>"; };
+		D7BB56D030AD798E004377D7 /* Restore.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Restore.hpp; sourceTree = "<group>"; };
 		D7F9965B30AC472000C92C3E /* BackupStoreCPP */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BackupStoreCPP; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7F9965E30AC472000C92C3E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -58,6 +67,12 @@
 			isa = PBXGroup;
 			children = (
 				D7F9965E30AC472000C92C3E /* main.cpp */,
+				D7BB56C930AD73B7004377D7 /* ChunkStore.cpp */,
+				D7BB56CA30AD73B7004377D7 /* ChunkStore.hpp */,
+				D7BB56CC30AD743C004377D7 /* Backup.cpp */,
+				D7BB56CD30AD743C004377D7 /* Backup.hpp */,
+				D7BB56CF30AD798E004377D7 /* Restore.cpp */,
+				D7BB56D030AD798E004377D7 /* Restore.hpp */,
 			);
 			path = BackupStoreCPP;
 			sourceTree = "<group>";
@@ -119,7 +134,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7BB56D130AD798E004377D7 /* Restore.cpp in Sources */,
 				D7F9965F30AC472000C92C3E /* main.cpp in Sources */,
+				D7BB56CE30AD743C004377D7 /* Backup.cpp in Sources */,
+				D7BB56CB30AD73B7004377D7 /* ChunkStore.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
