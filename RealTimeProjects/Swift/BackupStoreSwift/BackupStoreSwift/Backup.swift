@@ -28,6 +28,7 @@ func backupFile(path: String) throws {
     var chunkCount = 0
     var newCount = 0
     var dupCount = 0
+    var order: [(UInt64, Int)] = []   // reading list: (fingerprint, position on shelf)
     
     while true{
         guard let chunk = try input.read(upToCount: 4096), !chunk.isEmpty else { break }
@@ -37,15 +38,17 @@ func backupFile(path: String) throws {
         let shelf = shelves[fp] ?? []
         
         // compare with each saved chunk on this shelf, reading its bytes from store.dat
-        var matched = false
-        for loc in shelf {
+        var position = shelf.count   // a new chunk goes at the end of its shelf
+        for (p, loc) in shelf.enumerated() {
             if try readChunk(from: storeReader, at: loc) == chunk {
-                matched = true
+                position = p
                 break
             }
         }
-        if matched {
+        
+        if position < shelf.count {
             dupCount += 1
+            order.append((fp, position))
             print("  duplicate")
         } else {
             let loc = ChunkLocation(offset: storeEnd, length: chunk.count)
@@ -54,6 +57,7 @@ func backupFile(path: String) throws {
             storeEnd += UInt64(chunk.count)
             
             shelves[fp, default: []].append(loc)
+            order.append((fp, shelf.count))
             newCount += 1
             print("  new")
         }
@@ -62,4 +66,21 @@ func backupFile(path: String) throws {
     print("new: \(newCount), duplicate: \(dupCount)")
     print("total chunks: \(chunkCount)")
     print("store.dat is \(storeEnd) bytes")
+    
+    // save the reading list
+    var idxText = ""
+    for (fp, pos) in order {
+        idxText += "\(fp) \(pos)\n"
+    }
+    try idxText.write(toFile: "store.idx", atomically: true, encoding: .utf8)
+    
+    // save the catalog
+    var catText = ""
+    for (fp, locs) in shelves {
+        for loc in locs {
+            catText += "\(fp) \(loc.offset) \(loc.length)\n"
+        }
+    }
+    try catText.write(toFile: "store.cat", atomically: true, encoding: .utf8)
+    print("store.idx and store.cat written")
 }
