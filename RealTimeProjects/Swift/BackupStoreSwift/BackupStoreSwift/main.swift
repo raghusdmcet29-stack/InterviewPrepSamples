@@ -14,3 +14,16 @@ do {
 } catch {
     print("backup failed: \(error)")
 }
+
+do {
+    let data = try RestoreController().loadRestoreData()
+    print("shelves: \(data.shelves.count), order entries: \(data.order.count)")
+} catch {
+    print("restore load failed: \(error)")
+}
+
+do {
+    try RestoreController().restoreFile(outputPath: NSHomeDirectory() + "/test16k_restored.txt")
+} catch {
+    print("restore failed: \(error)")
+}

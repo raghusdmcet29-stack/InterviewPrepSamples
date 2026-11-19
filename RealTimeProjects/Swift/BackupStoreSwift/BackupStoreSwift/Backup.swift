@@ -10,7 +10,7 @@ import Foundation
 struct BackupController {
     let storeFolder: String
 
-    init(storeFolder: String = ".") {
+    init(storeFolder: String = NSHomeDirectory()) {
         self.storeFolder = storeFolder
     }
 
@@ -21,7 +21,9 @@ struct BackupController {
 
         let input = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
         defer { try? input.close() }
-
+        // start with an empty store.dat so this backup matches the new catalog
+        FileManager.default.createFile(atPath: storeFolder + "/store.dat", contents: nil)
+        
         guard let storeWriter = FileHandle(forWritingAtPath: storeFolder + "/store.dat"),
               let storeReader = FileHandle(forReadingAtPath: storeFolder + "/store.dat") else {
             throw StoreError(message: "could not open store.dat")
