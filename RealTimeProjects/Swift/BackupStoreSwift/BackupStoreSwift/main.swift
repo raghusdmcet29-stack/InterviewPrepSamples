@@ -7,11 +7,10 @@
 
 import Foundation
 
-print("Backup file path: ", terminator: "")
-let path = (readLine() ?? "").trimmingCharacters(in: .whitespaces)
+let inputPath = NSHomeDirectory() + "/test16k.txt"
 
 do {
-    try backupFile(path: path)
+    try BackupController().backupFile(path: inputPath)
 } catch {
-    print("error: \(error)")
+    print("backup failed: \(error)")
 }
