@@ -17,6 +17,7 @@ struct Room {
     Game game;
     std::string xToken;
     std::string oToken;
+    bool oJoined = false;
 };
 // All rooms, keyed by room number. Lives in memory, so it is empty after a restart.
 std::map<int, Room> rooms;
@@ -65,6 +66,13 @@ int main() {
             res.set_content("{\"error\":\"room not found\"}", "application/json");
             return;
         }
+        
+        if (it->second.oJoined) {
+            res.status = 409;
+            res.set_content("{\"error\":\"room already has an O player\"}", "application/json");
+            return;
+        }
+        it->second.oJoined = true;
 
         res.set_content("{\"roomId\":" + std::to_string(id) +
                         ",\"token\":\"" + it->second.oToken + "\",\"symbol\":\"O\"}",
@@ -131,6 +139,19 @@ int main() {
                         "\",\"turn\":\"" + std::string(1, it->second.game.currentPlayer()) +
                         "\",\"status\":\"" + it->second.game.status() + "\"}",
                         "application/json");
+    });
+    
+    // Lists rooms that are still waiting for an O player.
+    server.Get("/rooms", [](const httplib::Request&, httplib::Response& res) {
+        // Builds a comma-separated list of room numbers, e.g. "2,5".
+        std::string list;
+        for (const auto& [id, room] : rooms) {
+            // Skip rooms where O has already joined.
+            if (room.oJoined) continue;
+            if (!list.empty()) list += ",";
+            list += std::to_string(id);
+        }
+        res.set_content("{\"open\":[" + list + "]}", "application/json");
     });
 
     // Start the server on localhost, port 8080. This call keeps running until the program stops.

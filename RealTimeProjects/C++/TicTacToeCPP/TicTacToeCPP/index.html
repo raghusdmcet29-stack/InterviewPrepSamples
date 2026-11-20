@@ -23,6 +23,7 @@
 <button onclick="createRoom()">Create room</button>
 <input id="joinId" type="number" placeholder="room #">
 <button onclick="joinRoom()">Join room</button>
+<div id="openRooms"></div>
 <div id="board"></div>
 <script>
 const boardDiv = document.getElementById("board");
@@ -43,6 +44,22 @@ async function joinRoom() {
   const res = await fetch(`http://127.0.0.1:8080/rooms/${id}/join`, { method: "POST" });
   if (!res.ok) return;
   saveSeat(await res.json());
+}
+    
+async function loadOpenRooms() {
+  const res = await fetch("http://127.0.0.1:8080/rooms");
+  const data = await res.json();
+  const box = document.getElementById("openRooms");
+  box.innerHTML = "Open rooms: ";
+  for (const id of data.open) {
+    const btn = document.createElement("button");
+    btn.textContent = `Room ${id}`;
+    btn.onclick = () => {
+      document.getElementById("joinId").value = id;
+      joinRoom();
+    };
+    box.appendChild(btn);
+  }
 }
 
 async function sendMove(cell) {
@@ -70,6 +87,7 @@ async function draw() {
 
 draw();
 setInterval(draw, 1000);
+setInterval(loadOpenRooms, 1000);
 </script>
 </body>
 </html>
