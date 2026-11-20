@@ -1,7 +1,6 @@
 # Multiplayer Tic Tac Toe: Project Documentation
 
 **Author:** Anuraag
-**Repository:** https://github.com/raghusdmcet29-stack/InterviewPrepSamples (folder `RealTimeProjects/C++/TicTacToeCPP`)
 **Language:** C++17 (server), HTML, CSS and JavaScript (browser page)
 **Status:** Core game, server, and browser play are complete and tested. CMakeLists.txt for Windows is pending.
 
@@ -226,15 +225,6 @@ curl http://127.0.0.1:8080/rooms
 curl http://127.0.0.1:8080/rooms/1
 ```
 
-## 11. Version History
-
-| Commit | Contents |
-|--------|----------|
-| `63cb254` | Game logic: board, turns, winner detection, status, move refusal after game over |
-| `6ccab5a` | Server: create, join, move, and room state routes |
-| `4ad2df5` | Frontend: page title, 3x3 board grid |
-| `78e28e1` | Frontend: seats, create and join rooms, two-browser play, result display |
-| `eeea932` | Server: join limit per room, open rooms list, room lifecycle tests passed |
 
 ## 12. Remaining Work
 
