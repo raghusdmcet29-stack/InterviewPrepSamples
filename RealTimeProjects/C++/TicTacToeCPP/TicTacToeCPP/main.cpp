@@ -34,6 +34,9 @@ int main() {
         res.set_content("hello", "text/plain");
     });
 
+    server.set_default_headers({
+        {"Access-Control-Allow-Origin", "*"}
+    });
     // Echoes back whatever text is in the URL.
     server.Get("/echo/:text", [](const httplib::Request& req, httplib::Response& res) {
         res.set_content(req.path_params.at("text"), "text/plain");
@@ -90,6 +93,13 @@ int main() {
         else {
             res.status = 403;
             res.set_content("{\"error\":\"invalid token\"}", "application/json");
+            return;
+        }
+        
+        // New check: refuse the move if it is not this player's turn.
+        if (symbol != it->second.game.currentPlayer()) {
+            res.status = 409;
+            res.set_content("{\"error\":\"not your turn\"}", "application/json");
             return;
         }
 

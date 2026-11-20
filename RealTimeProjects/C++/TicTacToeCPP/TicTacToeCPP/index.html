@@ -19,14 +19,57 @@
     </head>
 <body>
 <h1>Tic Tac Toe</h1>
+<div id="info"></div>
+<button onclick="createRoom()">Create room</button>
+<input id="joinId" type="number" placeholder="room #">
+<button onclick="joinRoom()">Join room</button>
 <div id="board"></div>
 <script>
-    const boardDiv = document.getElementById("board");
-    for (let i = 0; i < 9; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = "";
-      boardDiv.appendChild(btn);
-    }
+const boardDiv = document.getElementById("board");
+
+let seat = JSON.parse(localStorage.getItem("ttt-seat") || "null");
+
+function saveSeat(data) {
+  seat = data;
+  localStorage.setItem("ttt-seat", JSON.stringify(data));
+}
+async function createRoom() {
+    const res = await fetch("http://127.0.0.1:8080/rooms", { method: "POST" });
+    saveSeat(await res.json());
+}
+    
+async function joinRoom() {
+  const id = document.getElementById("joinId").value;
+  const res = await fetch(`http://127.0.0.1:8080/rooms/${id}/join`, { method: "POST" });
+  if (!res.ok) return;
+  saveSeat(await res.json());
+}
+
+async function sendMove(cell) {
+    await fetch(`http://127.0.0.1:8080/rooms/${seat.roomId}/move?token=${seat.token}&cell=${cell}`, { method: "POST" });
+}
+
+async function draw() {
+    if (!seat) return;
+    const res = await fetch(`http://127.0.0.1:8080/rooms/${seat.roomId}`);
+  const state = await res.json();
+  const info = document.getElementById("info");
+  if (state.status === "playing") {
+    info.textContent = `Room ${seat.roomId}, you are ${seat.symbol}. Turn: ${state.turn}`;
+  } else {
+    info.textContent = `Room ${seat.roomId}, you are ${seat.symbol}. ${state.status}`;
+  }
+  boardDiv.innerHTML = "";
+  for (let i = 0; i < 9; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = state.board[i] === "." ? "" : state.board[i];
+    btn.onclick = () => sendMove(i);
+    boardDiv.appendChild(btn);
+  }
+}
+
+draw();
+setInterval(draw, 1000);
 </script>
 </body>
 </html>
