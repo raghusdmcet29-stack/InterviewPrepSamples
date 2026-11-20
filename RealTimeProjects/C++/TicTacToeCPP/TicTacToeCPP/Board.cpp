@@ -67,3 +67,7 @@ bool Board::isFull() const {
     }
     return true;                       // no empty cell was found
 }
+
+char Board::cell(int index) const {
+    return cells_[index];
+}

@@ -31,6 +31,8 @@
 		D71AC23330AEF8E400EAD681 /* Board.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Board.hpp; sourceTree = "<group>"; };
 		D71AC23530AEFE2B00EAD681 /* Game.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Game.cpp; sourceTree = "<group>"; };
 		D71AC23630AEFE2B00EAD681 /* Game.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Game.hpp; sourceTree = "<group>"; };
+		D772B6AA30B00B9E00F39423 /* json.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = json.hpp; sourceTree = "<group>"; };
+		D772B6AB30B00B9E00F39423 /* httplib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httplib.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +65,7 @@
 		D71AC22A30AEF81900EAD681 /* TicTacToeCPP */ = {
 			isa = PBXGroup;
 			children = (
+				D772B6AC30B00BEA00F39423 /* HTTP */,
 				D71AC22B30AEF81900EAD681 /* main.cpp */,
 				D71AC23230AEF8E400EAD681 /* Board.cpp */,
 				D71AC23330AEF8E400EAD681 /* Board.hpp */,
@@ -70,6 +73,15 @@
 				D71AC23630AEFE2B00EAD681 /* Game.hpp */,
 			);
 			path = TicTacToeCPP;
+			sourceTree = "<group>";
+		};
+		D772B6AC30B00BEA00F39423 /* HTTP */ = {
+			isa = PBXGroup;
+			children = (
+				D772B6AA30B00B9E00F39423 /* json.hpp */,
+				D772B6AB30B00B9E00F39423 /* httplib.h */,
+			);
+			path = HTTP;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

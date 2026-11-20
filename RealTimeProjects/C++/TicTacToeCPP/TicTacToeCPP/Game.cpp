@@ -35,3 +35,7 @@ std::string Game::status() const {
     if (board_.isFull()) return "Draw";
     return "playing";
 }
+
+char Game::cellAt(int index) const {
+    return board_.cell(index);
+}

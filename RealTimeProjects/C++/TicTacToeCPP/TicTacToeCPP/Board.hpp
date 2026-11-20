@@ -19,6 +19,7 @@ public:
     void print() const; // prints the grid to the screen; "const" means it does not change the board
     void set(int cell, char mark);  // puts 'X' or 'O' into the given cell (0 to 8)
     bool canPlay(int cell) const;   // true if cell is 0 to 8 and empty
+    char cell(int index) const;  // returns ' ', 'X', or 'O' for the given cell (0 to 8)
     char winner() const;   // returns 'X' or 'O' if someone has a line, otherwise ' '
     bool isFull() const;   // true if all 9 cells are filled
     
