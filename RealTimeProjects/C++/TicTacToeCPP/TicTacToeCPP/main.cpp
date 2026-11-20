@@ -7,15 +7,21 @@
 // tells them what to do. Game rules (turns, winner) will be added here later.
 
 #include <iostream>
-#include "Board.hpp"
+#include "Game.hpp"
 
 int main() {
-    Board board;
-    std::cout << "empty: " << board.isFull() << "\n";
+    Game game;
 
-    for (int cell = 0; cell < 9; cell++) {
-        board.set(cell, 'X');
-    }
-    std::cout << "full: " << board.isFull() << "\n";
+    game.play(0);  // X top-left
+    game.play(3);  // O middle-left
+    game.play(4);  // X center
+    game.play(5);  // O middle-right
+    game.play(8);  // X bottom-right, completes the diagonal
+
+    std::cout << "status: " << game.status() << "\n";
+    game.print();
+    bool accepted = game.play(1);  // try an extra move after X has won
+    std::cout << "extra move accepted: " << accepted << "\n";
+    game.print();
     return 0;
 }

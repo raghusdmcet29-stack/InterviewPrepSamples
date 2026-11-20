@@ -8,6 +8,7 @@
 #ifndef Game_hpp
 #define Game_hpp
 #include "Board.hpp"    // Game uses a Board
+#include <string>
 
 class Game {
 public:
@@ -15,6 +16,7 @@ public:
     char currentPlayer() const;  // returns 'X' or 'O'
     bool play(int cell);     // tries a move for the current player; true if it was accepted
     void print() const;      // shows the board
+    std::string status() const;
     
 private:
     Board board_;            // the grid
