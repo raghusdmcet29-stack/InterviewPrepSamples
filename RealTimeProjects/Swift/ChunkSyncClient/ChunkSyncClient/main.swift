@@ -8,17 +8,26 @@
 import Foundation
 import Network
 
-let path = NSString(string: "~/test.txt").expandingTildeInPath
+let clientTestFile = "~/test.txt"
+let clientPort: UInt16 = 9100
+let clientChunkSize = 4096
+
+// Cuts data into pieces of `size` bytes. The last piece may be smaller.
+func splitIntoChunks(_ data: Data, size: Int = 4096) -> [Data] {
+    var result: [Data] = []
+    var start = 0
+    while start < data.count {
+        let end = min(start + size, data.count)
+        result.append(Data(data[start..<end]))
+        start = end
+    }
+    return result
+}
+
+let path = NSString(string: clientTestFile).expandingTildeInPath
 let data = try Data(contentsOf: URL(fileURLWithPath: path))
 
-// Cut the file into 4 KB chunks
-var chunks: [Data] = []
-var pos = 0
-while pos < data.count {
-    let end = min(pos + 4096, data.count)
-    chunks.append(Data(data[pos..<end]))
-    pos = end
-}
+let chunks = splitIntoChunks(data, size: clientChunkSize)
 
 // Fingerprint each chunk
 let fps = chunks.map { fingerprint(of: $0) }
@@ -26,7 +35,7 @@ let fps = chunks.map { fingerprint(of: $0) }
 // Build one HAVE line per chunk
 let message = Data(fps.map { "HAVE \($0)\n" }.joined().utf8)
 
-let connection = NWConnection(host: "127.0.0.1", port: 9100, using: .tcp)
+let connection = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: clientPort)!, using: .tcp)
 
 var replies = ""
 var waitingForHave = true
