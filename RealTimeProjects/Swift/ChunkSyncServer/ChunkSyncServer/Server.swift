@@ -38,11 +38,47 @@ func handleLine(_ line: String, _ state: ConnectionBuffer, on connection: NWConn
         } else {
             sendReply("NEED", on: connection)
         }
-    } else if let header = parseChunkHeader(line) {
+    }else if line.hasPrefix("COMMIT ") {
+        handleCommit(line, on: connection)
+    }else if let header = parseChunkHeader(line) {
         // Don't reply yet. The next bytes on the connection are the chunk data.
         state.waitingFingerprint = header.fingerprint
         state.waitingLength = header.length
     }else {
+        sendReply(respErr, on: connection)
+    }
+}
+
+// Handles "COMMIT <filename> <fp0> <fp1> ..."
+func handleCommit(_ line: String, on connection: NWConnection) {
+    let parts = line.split(separator: " ").map(String.init)
+    guard parts.count >= 3 else {
+        sendReply(respErr, on: connection)
+        return
+    }
+    
+    let filename = parts[1]
+    let fingerprints = Array(parts.dropFirst(2))
+    
+    var output = Data()
+    for fp in fingerprints {
+        guard let piece = chunkStore.bytes(for: fp) else {
+            print("COMMIT missing chunk \(fp)")
+            sendReply(respErr, on: connection)
+            return
+        }
+        output.append(piece)
+    }
+    
+    let folder = NSString(string: "~/ChunkSyncServer/files").expandingTildeInPath
+    try? FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
+    let target = URL(fileURLWithPath: folder).appendingPathComponent(filename)
+    do {
+        try output.write(to: target)
+        print("Wrote \(output.count) bytes to \(target.path)")
+        sendReply(respOK, on: connection)
+    }catch {
+        print("Write failed: \(error)")
         sendReply(respErr, on: connection)
     }
 }
