@@ -82,7 +82,7 @@ func isValidChunkHeader(_ line: String) -> Bool {
 // Runs after exactly `length` bytes have arrived for a CHUNK.
 func handleChunkBytes(_ bytes: Data, fingerprint: String, on connection: NWConnection) {
     if bytesMatchFingerprint(bytes, fingerprint) {
-        chunkStore.add(fingerprint)
+        chunkStore.add(fingerprint, bytes)
         sendReply(respOK, on: connection)
     }else {
         sendReply(respErr, on: connection)
