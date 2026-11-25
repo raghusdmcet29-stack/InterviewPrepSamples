@@ -38,9 +38,9 @@ let message = Data(fps.map { "HAVE \($0)\n" }.joined().utf8)
 let connection = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: clientPort)!, using: .tcp)
 
 var replies = ""
-var waitingForHave = true
+enum Phase { case waitingForHave, waitingForOKs, waitingForCommit }
+var phase = Phase.waitingForHave
 var sentCount = 0
-var committing = false
 
 // Reads replies and moves through the phases
 func readAll() {
@@ -50,10 +50,10 @@ func readAll() {
         }
         let lines = replies.split(separator: "\n")
 
-        if waitingForHave {
+        if phase == .waitingForHave{
             // Phase 1: wait for one answer per chunk, then send the chunks the server needs
             guard lines.count >= fps.count else { readAll(); return }
-            waitingForHave = false
+            phase = .waitingForOKs
             print("Server replied:\n\(replies)")
 
             var out = Data()
@@ -81,7 +81,7 @@ func readAll() {
                 readAll()
             })
 
-        } else if !committing {
+        } else if phase == .waitingForOKs {
             // Phase 2: wait for one OK per chunk sent, then send COMMIT
             guard lines.count >= sentCount else { readAll(); return }
             print("CHUNK replies:\n\(replies)")
@@ -98,7 +98,7 @@ func readAll() {
 }
 
 func sendCommit() {
-    committing = true
+    phase = .waitingForCommit
     replies = ""
     connection.send(content: Data("COMMIT test.txt \(fps.joined(separator: " "))\n".utf8), completion: .contentProcessed { _ in })
     readAll()
