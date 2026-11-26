@@ -51,19 +51,23 @@ func handleLine(_ line: String, _ state: ConnectionBuffer, on connection: NWConn
         sendReply(respErr, on: connection)
         return
     }
-
+    print("[cmd] parsed: \(command)")
     switch command {
     case .have(let fingerprint):
+        print("[have] \(fingerprint.prefix(8))…")
         sendReply(chunkStore.contains(fingerprint) ? respHaveIt : respNeed, on: connection)
 
     case .chunk(let fingerprint, let length):
+        print("[chunk-header] \(fingerprint.prefix(8))… length \(length), waiting for bytes")
         // No reply yet. The next bytes on the connection are the chunk.
         state.pendingChunk = PendingChunk(fingerprint: fingerprint, length: length)
 
     case .begin(let name):
+        print("[begin] \(name)")
         reply(on: connection) { try assembler.begin(name) }
 
     case .append(let name, let fingerprint):
+        print("[append] \(name) <- \(fingerprint.prefix(8))…")
         reply(on: connection) {
             guard let bytes = chunkStore.read(fingerprint) else {
                 throw ServerError.unknownChunk(fingerprint)
@@ -72,11 +76,13 @@ func handleLine(_ line: String, _ state: ConnectionBuffer, on connection: NWConn
         }
 
     case .commit(let name):
+        print("[commit] \(name)")
         reply(on: connection) { try assembler.commit(name) }
     }
 }
 
 func handleChunkBytes(_ bytes: Data, claimed: String, on connection: NWConnection) {
+    print("[chunk] verifying \(claimed.prefix(8))…")
     reply(on: connection) {
         guard fingerprint(of: bytes) == claimed else { throw ServerError.hashMismatch }
         try chunkStore.add(claimed, bytes: bytes)
@@ -86,10 +92,12 @@ func handleChunkBytes(_ bytes: Data, claimed: String, on connection: NWConnectio
 // Handles everything in the buffer: lines normally, raw bytes while a CHUNK is pending.
 func processBuffered(_ state: ConnectionBuffer, _ connection: NWConnection) {
     while true {
+        print("[buffer] pendingChunk: \(state.pendingChunk.map { "\($0.length) bytes" } ?? "none")")
         if let pending = state.pendingChunk {
             guard let bytes = state.lines.nextBytes(count: pending.length) else {
                 return   // not all the bytes have arrived yet
             }
+            print("[chunk] got \(bytes.count) raw bytes")
             state.pendingChunk = nil
             handleChunkBytes(bytes, claimed: pending.fingerprint, on: connection)
         } else {
@@ -105,6 +113,7 @@ func receiveLoop(_ connection: NWConnection, _ state: ConnectionBuffer) {
     connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, isComplete, error in
         if let data, !data.isEmpty {
             state.lines.append(data)
+            print("[recv] \(data.count) bytes arrived")
             processBuffered(state, connection)
         }
         if isComplete || error != nil {

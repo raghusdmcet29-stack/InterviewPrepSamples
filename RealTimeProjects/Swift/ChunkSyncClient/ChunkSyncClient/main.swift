@@ -92,10 +92,12 @@ final class SyncClient {
         }
     }
 
+    
     // Sends one file, one chunk at a time. Only one piece is in memory.
     func sync(filePath: String, remoteName: String) async throws {
         try await sendLine("BEGIN \(remoteName)")
         try await expectOK("BEGIN")
+        print("[client begin] \(remoteName)")
 
         let file = try FileHandle(forReadingFrom: URL(fileURLWithPath: filePath))
         defer { try? file.close() }
@@ -104,11 +106,15 @@ final class SyncClient {
         var sent = 0
         while let piece = try file.read(upToCount: chunkSize), !piece.isEmpty {
             let fp = fingerprint(of: piece)
+            print("[piece] read \(piece.count) bytes, fp \(fp.prefix(8))…")
 
+            print("[client have] \(fp.prefix(8))…")
             try await sendLine("HAVE \(fp)")
             let answer = try await readLine()
+            print("[client answer] \(answer)")
 
             if answer == respNeed {
+                print("[client chunk] sending \(piece.count) bytes")
                 var message = Data("CHUNK \(fp) \(piece.count)\n".utf8)
                 message.append(piece)
                 try await send(message)
@@ -118,11 +124,13 @@ final class SyncClient {
                 throw ClientError.unexpectedReply(step: "HAVE", reply: answer)
             }
 
+            print("[client append] \(fp.prefix(8))…")
             try await sendLine("APPEND \(remoteName) \(fp)")
             try await expectOK("APPEND")
             total += 1
         }
 
+        print("[client commit]")
         try await sendLine("COMMIT \(remoteName)")
         try await expectOK("COMMIT")
         print("Chunks: \(total), sent: \(sent)")

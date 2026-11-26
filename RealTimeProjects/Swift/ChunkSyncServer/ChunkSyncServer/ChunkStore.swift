@@ -28,9 +28,10 @@ final class ChunkStore {
         try? Data(contentsOf: url(for: fingerprint))
     }
 
-    // Saves a chunk atomically, so a crash can't leave a half-written file.
+    // Saves a chunk atomically. Recreates the chunks folder if it was deleted while running.
     func add(_ fingerprint: String, bytes: Data) throws {
         guard !contains(fingerprint) else { return }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try bytes.write(to: url(for: fingerprint), options: .atomic)
     }
 }
