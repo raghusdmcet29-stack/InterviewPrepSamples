@@ -6,54 +6,65 @@
 //
 
 import Foundation
-
-// Shared rules between client and server.
-
 import CryptoKit
-import Foundation
 
-let chunkSize = 4096
 let serverPort: UInt16 = 9100
-let cmdHave = "HAVE"
-let cmdHaveIt = "HAVE_IT"
-let cmdNeed = "NEED"
-let cmdChunk = "CHUNK"
-let cmdCommit = "COMMIT"
+let chunkSize = 4096
 let respOK = "OK"
 let respErr = "ERR"
-let fingerprintLength = 64
+let respHaveIt = "HAVE_IT"
+let respNeed = "NEED"
 
-func isValidFingerprint(_ value: String) -> Bool {
-    return value.count == fingerprintLength
+enum Command {
+    case have(fingerprint: String)
+    case chunk(fingerprint: String, length: Int)
+    case begin(name: String)
+    case append(name: String, fingerprint: String)
+    case commit(name: String)
 }
 
-func isHexCharacter(_ c: Character) -> Bool {
-    return c.isHexDigit
-}
-
-func isValidHexFingerprint(_ value: String) -> Bool {
-    return isValidFingerprint(value) && value.allSatisfy(isHexCharacter)
-}
-
+// SHA-256 of the bytes, as 64 lowercase hex characters.
 func fingerprint(of data: Data) -> String {
-    let digest = SHA256.hash(data: data)
-    return digest.map { String(format: "%02x", $0) }.joined()
+    SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
 }
 
-func splitIntoChunks(_ data: Data) -> [Data] {
-    var chunks: [Data] = []
-    var start = 0
-    while start < data.count {
-        let end = min(start + chunkSize, data.count)
-        chunks.append(data.subdata(in: start..<end))
-        start = end
+func isValidFingerprint(_ text: String) -> Bool {
+    text.count == 64 && text.allSatisfy { $0.isHexDigit }
+}
+
+// Blocks names like "../x" or "/etc/x" so files stay in their folder.
+func isSafeName(_ name: String) -> Bool {
+    !name.isEmpty && name.count <= 255 && !name.contains("/") && !name.hasPrefix(".")
+}
+
+// Turns one text line into a Command, or nil if the line is invalid.
+func parseCommand(_ line: String) -> Command? {
+    let parts = line.split(separator: " ").map(String.init)
+    guard let verb = parts.first else { return nil }
+
+    switch verb {
+    case "HAVE":
+        guard parts.count == 2, isValidFingerprint(parts[1]) else { return nil }
+        return .have(fingerprint: parts[1])
+
+    case "CHUNK":
+        guard parts.count == 3, isValidFingerprint(parts[1]),
+              let length = Int(parts[2]), (1...chunkSize).contains(length) else { return nil }
+        return .chunk(fingerprint: parts[1], length: length)
+
+    case "BEGIN":
+        guard parts.count == 2, isSafeName(parts[1]) else { return nil }
+        return .begin(name: parts[1])
+
+    case "APPEND":
+        guard parts.count == 3, isSafeName(parts[1]), isValidFingerprint(parts[2]) else { return nil }
+        return .append(name: parts[1], fingerprint: parts[2])
+
+    case "COMMIT":
+        guard parts.count == 2, isSafeName(parts[1]) else { return nil }
+        return .commit(name: parts[1])
+
+    default:
+        return nil
     }
-    return chunks
-}
-
-func isValidHaveLine(_ line: String) -> Bool {
-    let parts = line.split(separator: " ")
-    guard parts.count == 2 else { return false }
-    guard String(parts[0]) == cmdHave else { return false }
-    return isValidHexFingerprint(String(parts[1]))
 }

@@ -12,6 +12,7 @@
 		D705085830B43ED200FD915C /* Server.swift in Sources */ = {isa = PBXBuildFile; fileRef = D705085730B43ED200FD915C /* Server.swift */; };
 		D705085A30B43F1C00FD915C /* LineBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D705085930B43F1C00FD915C /* LineBuffer.swift */; };
 		D705085C30B4454800FD915C /* ChunkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D705085B30B4454800FD915C /* ChunkStore.swift */; };
+		D780917330B7FBAF005623AA /* FileAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = D780917230B7FBAF005623AA /* FileAssembler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -33,6 +34,7 @@
 		D705085730B43ED200FD915C /* Server.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Server.swift; sourceTree = "<group>"; };
 		D705085930B43F1C00FD915C /* LineBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineBuffer.swift; sourceTree = "<group>"; };
 		D705085B30B4454800FD915C /* ChunkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChunkStore.swift; sourceTree = "<group>"; };
+		D780917230B7FBAF005623AA /* FileAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAssembler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +72,7 @@
 				D705085730B43ED200FD915C /* Server.swift */,
 				D705085930B43F1C00FD915C /* LineBuffer.swift */,
 				D705085B30B4454800FD915C /* ChunkStore.swift */,
+				D780917230B7FBAF005623AA /* FileAssembler.swift */,
 			);
 			path = ChunkSyncServer;
 			sourceTree = "<group>";
@@ -134,6 +137,7 @@
 			files = (
 				D705084F30B416DC00FD915C /* main.swift in Sources */,
 				D705085A30B43F1C00FD915C /* LineBuffer.swift in Sources */,
+				D780917330B7FBAF005623AA /* FileAssembler.swift in Sources */,
 				D705085C30B4454800FD915C /* ChunkStore.swift in Sources */,
 				D705085830B43ED200FD915C /* Server.swift in Sources */,
 				D705085630B4185D00FD915C /* Protocol.swift in Sources */,

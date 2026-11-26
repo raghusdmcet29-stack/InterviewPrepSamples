@@ -8,116 +8,141 @@
 import Foundation
 import Network
 
-let clientTestFile = "~/test.txt"
-let clientPort: UInt16 = 9100
-let clientChunkSize = 4096
-
-// Cuts data into pieces of `size` bytes. The last piece may be smaller.
-func splitIntoChunks(_ data: Data, size: Int = 4096) -> [Data] {
-    var result: [Data] = []
-    var start = 0
-    while start < data.count {
-        let end = min(start + size, data.count)
-        result.append(Data(data[start..<end]))
-        start = end
-    }
-    return result
+enum ClientError: Error {
+    case connectionClosed
+    case unexpectedReply(step: String, reply: String)
 }
 
-let path = NSString(string: clientTestFile).expandingTildeInPath
-let data = try Data(contentsOf: URL(fileURLWithPath: path))
+final class SyncClient {
+    private let connection: NWConnection
+    private var buffer = Data()
 
-let chunks = splitIntoChunks(data, size: clientChunkSize)
+    init(port: UInt16) {
+        connection = NWConnection(host: "127.0.0.1",
+                                  port: NWEndpoint.Port(rawValue: port)!,
+                                  using: .tcp)
+    }
 
-// Fingerprint each chunk
-let fps = chunks.map { fingerprint(of: $0) }
-
-// Build one HAVE line per chunk
-let message = Data(fps.map { "HAVE \($0)\n" }.joined().utf8)
-
-let connection = NWConnection(host: "127.0.0.1", port: NWEndpoint.Port(rawValue: clientPort)!, using: .tcp)
-
-var replies = ""
-enum Phase { case waitingForHave, waitingForOKs, waitingForCommit }
-var phase = Phase.waitingForHave
-var sentCount = 0
-
-// Reads replies and moves through the phases
-func readAll() {
-    connection.receive(minimumIncompleteLength: 1, maximumLength: 4096) { content, _, _, _ in
-        if let content, let text = String(data: content, encoding: .utf8) {
-            replies += text
-        }
-        let lines = replies.split(separator: "\n")
-
-        if phase == .waitingForHave{
-            // Phase 1: wait for one answer per chunk, then send the chunks the server needs
-            guard lines.count >= fps.count else { readAll(); return }
-            phase = .waitingForOKs
-            print("Server replied:\n\(replies)")
-
-            var out = Data()
-            var sent = 0
-            for (i, answer) in lines.enumerated() where answer == "NEED" {
-                out.append(Data("CHUNK \(fps[i]) \(chunks[i].count)\n".utf8))
-                out.append(chunks[i])
-                sent += 1
-            }
-            replies = ""
-
-            if sent == 0 {
-                print("Server already has all chunks")
-                sendCommit()
-                return
-            }
-
-            sentCount = sent
-            print("Sending \(sent) chunk(s)")
-            connection.send(content: out, completion: .contentProcessed { error in
-                if let error {
-                    print("Send failed: \(error)")
-                    exit(1)
+    func connect() async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            connection.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    self.connection.stateUpdateHandler = nil
+                    continuation.resume()
+                case .failed(let error):
+                    self.connection.stateUpdateHandler = nil
+                    continuation.resume(throwing: error)
+                default:
+                    break
                 }
-                readAll()
-            })
-
-        } else if phase == .waitingForOKs {
-            // Phase 2: wait for one OK per chunk sent, then send COMMIT
-            guard lines.count >= sentCount else { readAll(); return }
-            print("CHUNK replies:\n\(replies)")
-            sendCommit()
-
-        } else {
-            // Phase 3: wait for the COMMIT reply, then exit
-            guard lines.count >= 1 else { readAll(); return }
-            print("COMMIT reply:\n\(replies)")
-            connection.cancel()
-            exit(0)
+            }
+            connection.start(queue: .main)
         }
     }
-}
 
-func sendCommit() {
-    phase = .waitingForCommit
-    replies = ""
-    connection.send(content: Data("COMMIT test.txt \(fps.joined(separator: " "))\n".utf8), completion: .contentProcessed { _ in })
-    readAll()
-}
+    func send(_ data: Data) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            connection.send(content: data, completion: .contentProcessed { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
+            })
+        }
+    }
 
-connection.stateUpdateHandler = { state in
-    print("connection state: \(state)")
-    if case .ready = state {
-        print("Connected to server on port 9100")
-        connection.send(content: message, completion: .contentProcessed { error in
-            if let error {
-                print("Send failed: \(error)")
-                connection.cancel()
-                exit(1)
+    func sendLine(_ line: String) async throws {
+        try await send(Data((line + "\n").utf8))
+    }
+
+    // Returns the next full line from the server. Replies are short, so the buffer stays small.
+    func readLine() async throws -> String {
+        while true {
+            if let newline = buffer.firstIndex(of: 0x0A) {
+                let line = String(decoding: buffer[..<newline], as: UTF8.self)
+                buffer = Data(buffer[(newline + 1)...])
+                return line
             }
-            print("Sent Data")
-        })
-        readAll()
+            buffer.append(try await receive())
+        }
+    }
+
+    private func receive() async throws -> Data {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, Error>) in
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, _, isComplete, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if let content, !content.isEmpty {
+                    continuation.resume(returning: content)
+                } else if isComplete {
+                    continuation.resume(throwing: ClientError.connectionClosed)
+                } else {
+                    continuation.resume(returning: Data())
+                }
+            }
+        }
+    }
+
+    func expectOK(_ step: String) async throws {
+        let reply = try await readLine()
+        guard reply == respOK else {
+            throw ClientError.unexpectedReply(step: step, reply: reply)
+        }
+    }
+
+    // Sends one file, one chunk at a time. Only one piece is in memory.
+    func sync(filePath: String, remoteName: String) async throws {
+        try await sendLine("BEGIN \(remoteName)")
+        try await expectOK("BEGIN")
+
+        let file = try FileHandle(forReadingFrom: URL(fileURLWithPath: filePath))
+        defer { try? file.close() }
+
+        var total = 0
+        var sent = 0
+        while let piece = try file.read(upToCount: chunkSize), !piece.isEmpty {
+            let fp = fingerprint(of: piece)
+
+            try await sendLine("HAVE \(fp)")
+            let answer = try await readLine()
+
+            if answer == respNeed {
+                var message = Data("CHUNK \(fp) \(piece.count)\n".utf8)
+                message.append(piece)
+                try await send(message)
+                try await expectOK("CHUNK")
+                sent += 1
+            } else if answer != respHaveIt {
+                throw ClientError.unexpectedReply(step: "HAVE", reply: answer)
+            }
+
+            try await sendLine("APPEND \(remoteName) \(fp)")
+            try await expectOK("APPEND")
+            total += 1
+        }
+
+        try await sendLine("COMMIT \(remoteName)")
+        try await expectOK("COMMIT")
+        print("Chunks: \(total), sent: \(sent)")
     }
 }
-connection.start(queue: .main)
+
+let testFile = NSString(string: "~/test.txt").expandingTildeInPath
+let client = SyncClient(port: serverPort)
+
+Task {
+    do {
+        try await client.connect()
+        print("Connected to server on port \(serverPort)")
+        try await client.sync(filePath: testFile, remoteName: "test.txt")
+        print("Sync finished")
+        exit(0)
+    } catch {
+        print("Sync failed: \(error)")
+        exit(1)
+    }
+}
+
 dispatchMain()
