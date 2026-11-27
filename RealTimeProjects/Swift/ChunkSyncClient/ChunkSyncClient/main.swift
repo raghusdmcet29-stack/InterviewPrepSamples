@@ -137,7 +137,7 @@ final class SyncClient {
     }
 }
 
-let testFile = NSString(string: "~/test.txt").expandingTildeInPath
+let testFile = NSString(string: "~/Untitled_restored.txt").expandingTildeInPath
 let client = SyncClient(port: serverPort)
 
 Task {
